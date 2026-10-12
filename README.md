@@ -57,4 +57,8 @@ Before publishing anything about client work: describe the employer by industry,
    ```
 
 2. Open a pull request. Merged PRs are public and cannot be retracted, so the file carries no email.
-3. After the merge, attach `ahmadwhosecures.is-a.dev` to the Pages project through the Cloudflare API. is-a.dev is on the Public Suffix List, so the dashboard cannot add it. Use an API token scoped to Pages edit only and revoke it afterwards.
+3. After the merge, attach `ahmadwhosecures.is-a.dev` to the Pages project through the Cloudflare API. is-a.dev is on the Public Suffix List, so the dashboard cannot add it. `scripts/Add-PagesCustomDomain.ps1` does this from Windows PowerShell 5.1 or PowerShell 7. It prompts for an API token scoped to Account, Cloudflare Pages, Edit; revoke the token afterwards.
+
+   ```powershell
+   .\scripts\Add-PagesCustomDomain.ps1 -AccountId YOUR_32_CHARACTER_ACCOUNT_ID
+   ```
