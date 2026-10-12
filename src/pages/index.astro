@@ -1,0 +1,55 @@
+---
+// Author: Ahmad Shaukat
+import Base from '../layouts/Base.astro';
+import Ledger from '../components/Ledger.astro';
+import EntryList from '../components/EntryList.astro';
+import { getCollection } from 'astro:content';
+import { byNewest } from '../lib/sort';
+import { site } from '../site.config';
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const writing = (await getCollection('writing', ({ data }) => !data.draft))
+  .sort(byNewest)
+  .slice(0, 5);
+---
+
+<Base>
+  <div class="wrap">
+    <section class="hero" aria-labelledby="hero-title">
+      <h1 id="hero-title">{site.name}</h1>
+      <p class="hero-statement">
+        I build security programs for US defense contractors and keep the evidence an assessor will ask to see.
+      </p>
+      <p class="hero-detail">
+        I am the only security engineer at a defense contractor of about 80 users. I cover CMMC, NIST SP 800-171 and
+        ISO 27001. I also run detection and response, plus the migrations that sit underneath all of it.
+        Earlier work was in SOC operations, DevOps and carrier network engineering.
+      </p>
+      <ul class="hero-links">
+        <li><a href={site.linkedin} rel="me noopener">LinkedIn</a></li>
+        <li><a href={site.github} rel="me noopener">GitHub</a></li>
+        <li><a href="/writing/">Read the write-ups</a></li>
+      </ul>
+      <p class="hero-meta">{site.role}. {site.location}.</p>
+    </section>
+
+    <section class="section" aria-labelledby="ledger-title">
+      <div class="section-head">
+        <h2 id="ledger-title">Claims and the evidence behind them</h2>
+        <p>
+          Status uses assessment language. Implemented means in place with evidence. In progress means
+          designed, with the build under way.
+        </p>
+      </div>
+      <Ledger items={work} />
+    </section>
+
+    <section class="section" aria-labelledby="writing-title">
+      <div class="section-head">
+        <h2 id="writing-title">Writing</h2>
+        <p>Field notes from the work above. Lab data and sanitised detail only.</p>
+      </div>
+      <EntryList items={writing} />
+    </section>
+  </div>
+</Base>

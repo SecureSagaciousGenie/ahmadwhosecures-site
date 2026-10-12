@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <style>
+    rect { fill: #f7f8f6; stroke: #18202b; }
+    text { fill: #18202b; }
+    @media (prefers-color-scheme: dark) {
+      rect { fill: #12171d; stroke: #e6eaee; }
+      text { fill: #e6eaee; }
+    }
+  </style>
+  <rect x="1" y="1" width="30" height="30" rx="1" stroke-width="2"/>
+  <text x="16" y="21" text-anchor="middle" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-weight="700" font-size="13">AS</text>
+</svg>

@@ -1,0 +1,91 @@
+---
+// Author: Ahmad Shaukat
+// Base page shell: metadata, header, footer.
+import '@fontsource-variable/public-sans';
+import '@fontsource-variable/source-serif-4';
+import '../styles/global.css';
+import { site, nav } from '../site.config';
+
+interface Props {
+  title?: string;
+  description?: string;
+  type?: 'website' | 'article';
+  published?: Date;
+}
+
+const { title, description = site.description, type = 'website', published } = Astro.props;
+const fullTitle = title ? `${title} | ${site.name}` : `${site.name} | ${site.role}`;
+const canonical = new URL(Astro.url.pathname, site.url).href;
+const path = Astro.url.pathname;
+const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
+const year = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content={site.name} />
+    <link rel="canonical" href={canonical} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name}: writing`} href="/rss.xml" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#f7f8f6" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#12171d" media="(prefers-color-scheme: dark)" />
+    <meta property="og:type" content={type} />
+    <meta property="og:title" content={title ?? site.name} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:site_name" content={site.name} />
+    <meta name="twitter:card" content="summary" />
+    {published && <meta property="article:published_time" content={published.toISOString()} />}
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <header class="site-header">
+      <div class="wrap">
+        <a class="brand" href="/" aria-label={`${site.name}, home`}>
+          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+            <rect x="1" y="1" width="30" height="30" rx="1"></rect>
+            <text x="16" y="20.5" text-anchor="middle">AS</text>
+          </svg>
+          <span>{site.name}</span>
+        </a>
+        <nav class="site-nav" aria-label="Main">
+          <ul>
+            {
+              nav.map((item) => (
+                <li>
+                  <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
+                    {item.label}
+                  </a>
+                </li>
+              ))
+            }
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <slot />
+    </main>
+
+    <footer class="site-footer">
+      <div class="wrap">
+        <p>{site.name}, {site.role}. {site.location}. &copy; {year}</p>
+        <ul>
+          <li><a href={site.linkedin} rel="me noopener">LinkedIn</a></li>
+          <li><a href={site.github} rel="me noopener">GitHub</a></li>
+          {site.email && <li><a href={`mailto:${site.email}`}>Email</a></li>}
+          <li><a href="/rss.xml">RSS</a></li>
+          <li><a href="/.well-known/security.txt">security.txt</a></li>
+        </ul>
+      </div>
+    </footer>
+  </body>
+</html>

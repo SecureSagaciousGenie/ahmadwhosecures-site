@@ -1,0 +1,7 @@
+# Author: Ahmad Shaukat
+# Security contact for ahmadwhosecures.is-a.dev and the tools linked from it.
+Contact: https://www.linkedin.com/in/ahmadshkt/
+Contact: https://github.com/SecureSagaciousGenie
+Expires: 2027-04-12T00:00:00.000Z
+Preferred-Languages: en
+Canonical: https://ahmadwhosecures.is-a.dev/.well-known/security.txt

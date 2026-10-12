@@ -1,0 +1,14 @@
+---
+// Author: Ahmad Shaukat
+// Assessment-style status marker: filled square for Implemented/Shipped, outlined amber square for In progress.
+interface Props {
+  status: 'Implemented' | 'In progress' | 'Shipped';
+  note?: string;
+}
+const { status, note } = Astro.props;
+---
+
+<div>
+  <span class="status" data-status={status}>{status}</span>
+  {note && <p class="status-note">{note}</p>}
+</div>

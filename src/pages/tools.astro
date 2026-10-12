@@ -1,0 +1,71 @@
+---
+// Author: Ahmad Shaukat
+import Base from '../layouts/Base.astro';
+
+const repo = 'https://github.com/SecureSagaciousGenie/Win11-Security-Optimizer';
+---
+
+<Base
+  title="Tools"
+  description="Win11-Security-Optimizer: a free, open-source Windows 11 hardening, debloat and compromise-triage tool where every change is backed up and reversible."
+>
+  <div class="wrap">
+    <header class="page-head">
+      <h1>Tools</h1>
+      <p>Software I build and maintain in the open. MIT licensed unless stated.</p>
+    </header>
+
+    <section aria-labelledby="w11-title">
+      <div class="section-head">
+        <h2 id="w11-title">Win11-Security-Optimizer</h2>
+        <p><a href={repo} rel="noopener">Source on GitHub</a></p>
+      </div>
+      <div class="cols" style="margin-top: 2rem">
+        <div class="stack">
+          <p>
+            A Windows 11 security tool with a GUI for people who own the machine but do not live in PowerShell.
+            It audits and hardens security settings, removes preinstalled apps, checks for signs of compromise
+            and manages startup items. It runs from a batch file on the PowerShell 5.1 that ships with Windows,
+            so there is no installer and no unsigned binary for SmartScreen to quarantine.
+          </p>
+          <p>
+            The design rule is that nothing changes without a tick and a confirmation, and everything that
+            changes can be undone. Before the first change it creates a System Restore point. Every change
+            writes its before-state to a JSON backup and appends an undo step to a rollback script. Each fix
+            is re-read after it is applied to confirm it took effect.
+          </p>
+          <p>
+            <a href="/writing/building-a-reversible-windows-hardening-tool/">Read the design write-up</a>
+          </p>
+        </div>
+        <table class="facts">
+          <thead>
+            <tr><th scope="col">Area:</th><th scope="col">What it does:</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <th scope="row">Security</th>
+              <td>Audits firewall, Defender, SmartScreen, UAC, SMBv1, LLMNR, AutoRun, RDP and more. Fixes are tiered Safe, Elevated, High-risk or Audit-only.</td>
+            </tr>
+            <tr>
+              <th scope="row">Investigate</th>
+              <td>Hidden admins, backdoor accounts, persistence, exposed remote access, Defender exclusions and hosts-file tampering, in plain English.</td>
+            </tr>
+            <tr>
+              <th scope="row">Deep Scan</th>
+              <td>Native process and event-log hunt: masquerading binaries, encoded PowerShell, download cradles, LOLBin abuse, log clearing.</td>
+            </tr>
+            <tr>
+              <th scope="row">Pro Tools</th>
+              <td>Opt-in Hayabusa and Chainsaw, downloaded on consent from official releases and verified against a pinned SHA-256.</td>
+            </tr>
+            <tr>
+              <th scope="row">Debloat and startup</th>
+              <td>Ticked removal of consumer apps with reinstall notes; reversible startup toggles that rename rather than delete.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</Base>

@@ -1,0 +1,59 @@
+---
+// Author: Ahmad Shaukat
+import Base from '../../layouts/Base.astro';
+import Status from '../../components/Status.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const work = await getCollection('work');
+  return work.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const writing = await getCollection('writing', ({ id, data }) => !data.draft && entry.data.related.includes(id));
+const compliance = entry.data.frameworks.some((f) => /CMMC|800-171|27001|DFARS/.test(f));
+---
+
+<Base title={entry.data.title} description={entry.data.evidence} type="article">
+  <div class="wrap">
+    <header class="doc-head">
+      <h1>{entry.data.title}</h1>
+      <p class="lede">{entry.data.claim}</p>
+    </header>
+    <div class="doc">
+      <article class="prose">
+        <Content />
+      </article>
+      <aside class="doc-aside" aria-label="Case summary">
+        <dl>
+          <dt>Setting:</dt>
+          <dd>{entry.data.setting}</dd>
+          <dt>Period:</dt>
+          <dd>{entry.data.period}</dd>
+          <dt>Status:</dt>
+          <dd><Status status={entry.data.status} note={entry.data.statusNote} /></dd>
+          <dt>Frameworks and tools:</dt>
+          <dd>{entry.data.frameworks.join(', ')}</dd>
+        </dl>
+      </aside>
+    </div>
+    {
+      writing.length > 0 && (
+        <section class="related" aria-labelledby="related-title">
+          <h2 id="related-title">Related writing</h2>
+          <EntryList items={writing} />
+        </section>
+      )
+    }
+    {
+      compliance && (
+        <p class="note">
+          Compliance points here reflect my reading of published guidance and my own program work. They are
+          not legal advice.
+        </p>
+      )
+    }
+  </div>
+</Base>

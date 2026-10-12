@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 330" role="img" aria-labelledby="t d">
+  <title id="t">Single-node Wazuh data flow</title>
+  <desc id="d">The RMM pushes Sysmon and the Wazuh agent to Windows endpoints. Agents send five event channels and FIM events to the Wazuh manager on 1514/tcp. The manager decodes and applies rules, then ships alerts to the indexer, which the dashboard reads on 443.</desc>
+  <!-- Author: Ahmad Shaukat -->
+  <style>
+    text { font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; fill: #18202b; }
+    .h { font-size: 14px; font-weight: 700; }
+    .s { font-size: 12px; fill: #4a5462; }
+    .p { font-size: 12px; font-weight: 600; fill: #1f5a4e; }
+    .box { fill: #ffffff; stroke: #b9c1c9; stroke-width: 1.5; }
+    .srv { fill: #e3ede9; stroke: #1f5a4e; stroke-width: 1.5; }
+    .arrow { stroke: #18202b; stroke-width: 1.5; fill: none; marker-end: url(#a); }
+    .dash { stroke: #4a5462; stroke-width: 1.2; fill: none; stroke-dasharray: 5 4; marker-end: url(#a); }
+  </style>
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#18202b"/>
+    </marker>
+  </defs>
+  <rect width="680" height="330" fill="#ffffff"/>
+
+  <rect class="box" x="20" y="24" width="170" height="64" rx="4"/>
+  <text class="h" x="34" y="50">RMM</text>
+  <text class="s" x="34" y="70">Pushes Sysmon config and agent</text>
+
+  <rect class="box" x="20" y="150" width="170" height="130" rx="4"/>
+  <text class="h" x="34" y="176">Windows endpoints</text>
+  <text class="s" x="34" y="198">Sysmon, Security, System</text>
+  <text class="s" x="34" y="216">PowerShell Operational</text>
+  <text class="s" x="34" y="234">Defender</text>
+  <text class="s" x="34" y="258">FIM: paths and Run keys</text>
+
+  <path class="dash" d="M105,88 L105,146"/>
+
+  <rect class="srv" x="250" y="40" width="410" height="250" rx="4"/>
+  <text class="h" x="266" y="66">Single server, all-in-one</text>
+
+  <rect class="box" x="266" y="84" width="180" height="88" rx="4"/>
+  <text class="h" x="280" y="108">Wazuh manager</text>
+  <text class="s" x="280" y="128">Decoders and rules</text>
+  <text class="s" x="280" y="146">Local rules 100000+</text>
+  <text class="s" x="280" y="164">Agent groups</text>
+
+  <rect class="box" x="466" y="84" width="180" height="88" rx="4"/>
+  <text class="h" x="480" y="108">Wazuh indexer</text>
+  <text class="s" x="480" y="128">JVM heap about half of RAM</text>
+  <text class="s" x="480" y="146">Retention policies</text>
+  <text class="s" x="480" y="164">Bound to localhost</text>
+
+  <rect class="box" x="466" y="190" width="180" height="80" rx="4"/>
+  <text class="h" x="480" y="214">Wazuh dashboard</text>
+  <text class="s" x="480" y="234">443/tcp, analysts only</text>
+  <text class="s" x="480" y="252">from the admin subnet</text>
+
+  <path class="arrow" d="M190,200 C225,200 230,130 262,130"/>
+  <text class="p" x="196" y="148">1514/tcp</text>
+  <path class="arrow" d="M446,128 L462,128"/>
+  <path class="arrow" d="M556,172 L556,186"/>
+</svg>

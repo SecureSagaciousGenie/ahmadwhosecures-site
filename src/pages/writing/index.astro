@@ -1,0 +1,25 @@
+---
+// Author: Ahmad Shaukat
+import Base from '../../layouts/Base.astro';
+import EntryList from '../../components/EntryList.astro';
+import { getCollection } from 'astro:content';
+import { byNewest } from '../../lib/sort';
+
+const writing = (await getCollection('writing', ({ data }) => !data.draft)).sort(byNewest);
+---
+
+<Base
+  title="Writing"
+  description="Field notes on MS 365 migration, Conditional Access, Wazuh, DFIR triage and building reversible Windows hardening tools."
+>
+  <div class="wrap">
+    <header class="page-head">
+      <h1>Writing</h1>
+      <p>
+        Field notes from production work, rewritten so the lesson travels and the client detail does not.
+        Commands and configuration are from lab builds unless stated.
+      </p>
+    </header>
+    <EntryList items={writing} />
+  </div>
+</Base>

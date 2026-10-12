@@ -1,0 +1,36 @@
+---
+// Author: Ahmad Shaukat
+import Base from '../layouts/Base.astro';
+import { site } from '../site.config';
+---
+
+<Base title="Contact" description="How to reach Ahmad Shaukat.">
+  <div class="wrap">
+    <header class="page-head">
+      <h1>Contact</h1>
+      <p>LinkedIn is the fastest way to reach me. I work with US clients, remotely.</p>
+    </header>
+    <ul class="link-list" style="max-width: 40rem">
+      <li>
+        <a href={site.linkedin} rel="me noopener">LinkedIn</a>
+        <span>Messages and connection requests. Mention what you are working on.</span>
+      </li>
+      <li>
+        <a href={site.github} rel="me noopener">GitHub</a>
+        <span>Issues and pull requests on my open-source tools.</span>
+      </li>
+      {
+        site.email && (
+          <li>
+            <a href={`mailto:${site.email}`}>{site.email}</a>
+            <span>Email for anything longer.</span>
+          </li>
+        )
+      }
+      <li>
+        <a href="/.well-known/security.txt">security.txt</a>
+        <span>To report a security issue with this site or my tools.</span>
+      </li>
+    </ul>
+  </div>
+</Base>

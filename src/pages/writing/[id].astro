@@ -1,0 +1,83 @@
+---
+// Author: Ahmad Shaukat
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+import { site } from '../../site.config';
+
+export async function getStaticPaths() {
+  const writing = await getCollection('writing', ({ data }) => !data.draft);
+  return writing.map((entry) => ({ params: { id: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content, headings } = await render(entry);
+const fmt = (d: Date) =>
+  d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+const sections = headings.filter((h) => h.depth === 2);
+---
+
+<Base title={entry.data.title} description={entry.data.description} type="article" published={entry.data.date}>
+  <div class="wrap">
+    <header class="doc-head">
+      <h1>{entry.data.title}</h1>
+      <p class="lede">{entry.data.description}</p>
+      <p class="byline">
+        {site.name}. Published <time datetime={entry.data.date.toISOString().slice(0, 10)}>{fmt(entry.data.date)}</time>
+        {
+          entry.data.updated && (
+            <>
+              , updated <time datetime={entry.data.updated.toISOString().slice(0, 10)}>{fmt(entry.data.updated)}</time>
+            </>
+          )
+        }
+        .
+      </p>
+    </header>
+    <div class="doc">
+      <article class="prose">
+        <Content />
+      </article>
+      <aside class="doc-aside" aria-label="Article details">
+        <dl>
+          <dt>Topics:</dt>
+          <dd>{entry.data.topics.join(', ')}</dd>
+          {
+            sections.length > 1 && (
+              <>
+                <dt>Sections:</dt>
+                <dd>
+                  <ul class="toc">
+                    {sections.map((h) => (
+                      <li>
+                        <a href={`#${h.slug}`}>{h.text}</a>
+                      </li>
+                    ))}
+                  </ul>
+                </dd>
+              </>
+            )
+          }
+        </dl>
+      </aside>
+    </div>
+  </div>
+</Base>
+
+<style>
+  .toc {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .toc li {
+    margin-top: 0.4rem;
+  }
+  .toc a {
+    color: var(--ink-2);
+    text-decoration: none;
+  }
+  .toc a:hover {
+    color: var(--accent-ink);
+    text-decoration: underline;
+  }
+</style>
