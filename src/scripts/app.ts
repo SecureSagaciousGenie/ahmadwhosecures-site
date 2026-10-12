@@ -405,9 +405,9 @@ function initNameMorph() {
     running = true;
     root.setAttribute('data-state', to === 'handle' ? 'to-handle' : 'to-name');
     if (to === 'handle') {
-      await Promise.all([typeTo(who, WHO, 95), scrambleTo(tail, HANDLE, 800)]);
+      await Promise.all([typeTo(who, WHO, 80), scrambleTo(tail, HANDLE, 650)]);
     } else {
-      await Promise.all([typeTo(who, '', 70), scrambleTo(tail, NAME, 800)]);
+      await Promise.all([typeTo(who, '', 60), scrambleTo(tail, NAME, 650)]);
     }
     if (!alive) return;
     state = to;
@@ -423,7 +423,7 @@ function initNameMorph() {
   const schedule = (delay?: number) => {
     clearTimeout(timer as number);
     if (rm || !alive) return;
-    const wait = delay ?? (state === 'name' ? 2600 : 3400);
+    const wait = delay ?? 1000;
     timer = setTimeout(async () => {
       if (visible && !document.hidden) await go(state === 'name' ? 'handle' : 'name');
       schedule();
@@ -433,7 +433,7 @@ function initNameMorph() {
   btn.addEventListener('click', async () => {
     clearTimeout(timer as number);
     await go(state === 'name' ? 'handle' : 'name');
-    schedule(3800);
+    schedule(1600);
   });
 
   const io = new IntersectionObserver((entries) => {
@@ -441,7 +441,7 @@ function initNameMorph() {
   });
   io.observe(root);
 
-  schedule(2600);
+  schedule(1400);
   onCleanup(() => {
     alive = false;
     clearTimeout(timer as number);
