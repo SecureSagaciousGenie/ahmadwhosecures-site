@@ -25,9 +25,29 @@ const roles = [
     <section class="hero" aria-labelledby="hero-title">
       <div>
         <p class="kicker">whoami</p>
-        <h1 id="hero-title">
-          <Decrypt text="Ahmad" />
-          <span class="accent-line"><Decrypt text="Shaukat" /></span>
+        <h1 id="hero-title" class="morph" data-morph data-state="name">
+          <span class="sr-only">Ahmad Shaukat</span>
+          <button
+            type="button"
+            class="morph-btn"
+            aria-pressed="false"
+            aria-label="Show the handle: ahmad who secures"
+            title="ahmad who secures"
+            data-morph-btn
+          >
+            <span class="morph-line" aria-hidden="true"
+              ><span class="decrypt" data-decrypt data-text="Ahmad">Ahmad</span><span
+                class="morph-who"
+                data-morph-who></span></span
+            >
+            <span class="accent-line" aria-hidden="true"
+              ><span class="decrypt" data-decrypt data-text="S">S</span><span
+                class="decrypt"
+                data-decrypt
+                data-text="haukat"
+                data-morph-tail>haukat</span></span
+            >
+          </button>
         </h1>
         <p class="hero-role">
           <span class="sr-only">{site.role}</span>

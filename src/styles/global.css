@@ -1224,6 +1224,63 @@ html:not([data-js]) [data-reveal] {
   text-shadow: 0 0 30px rgba(76, 214, 255, 0.25);
 }
 
+/* Name morph: Ahmad Shaukat <-> Ahmad who Secures. The S is shared by both words. */
+.morph-btn {
+  all: unset;
+  display: block;
+  cursor: pointer;
+  border-radius: 8px;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.morph-btn:focus-visible {
+  outline: 2px solid var(--cyan);
+  outline-offset: 8px;
+}
+
+.morph-line {
+  display: block;
+}
+
+.morph-who {
+  display: inline-block;
+  margin-left: 0;
+  color: var(--green);
+  font-weight: 600;
+  text-shadow: 0 0 28px rgba(62, 230, 160, 0.45);
+  transition: margin-left 0.35s var(--ease-out);
+}
+
+.morph[data-state='handle'] .morph-who,
+.morph[data-state='to-handle'] .morph-who {
+  margin-left: 0.24em;
+}
+
+.morph-who[data-typing]::after {
+  content: '';
+  display: inline-block;
+  width: 0.08em;
+  height: 0.8em;
+  margin-left: 0.06em;
+  vertical-align: -0.02em;
+  background: var(--green);
+  animation: blink 0.6s steps(1) infinite;
+}
+
+.morph[data-state='handle'] .accent-line,
+.morph[data-state='to-handle'] .accent-line {
+  -webkit-text-stroke-color: var(--green);
+  text-shadow: 0 0 30px rgba(62, 230, 160, 0.3);
+}
+
+.hero h1 .accent-line {
+  transition: -webkit-text-stroke-color 0.4s, text-shadow 0.4s;
+}
+
+.morph-btn:hover .accent-line {
+  text-shadow: 0 0 40px rgba(76, 214, 255, 0.45);
+}
+
 .hero-role {
   margin-top: 1.25rem;
   font-family: var(--mono);

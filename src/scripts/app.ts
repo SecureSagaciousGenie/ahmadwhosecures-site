@@ -328,6 +328,127 @@ function initReveal() {
   onCleanup(() => io.disconnect());
 }
 
+function initNameMorph() {
+  const root = qs('[data-morph]');
+  const btn = qs<HTMLButtonElement>('[data-morph-btn]');
+  const who = qs('[data-morph-who]');
+  const tail = qs('[data-morph-tail]');
+  if (!root || !btn || !who || !tail) return;
+
+  const NAME = 'haukat';
+  const HANDLE = 'ecures';
+  const WHO = 'who';
+  const rm = reduced();
+  let state: 'name' | 'handle' = 'name';
+  let running = false;
+  let alive = true;
+  let visible = true;
+  let timer = 0 as number | ReturnType<typeof setTimeout>;
+
+  const scrambleTo = (el: HTMLElement, target: string, dur: number) =>
+    new Promise<void>((resolve) => {
+      if (rm) {
+        el.textContent = target;
+        el.dataset.text = target;
+        return resolve();
+      }
+      const from = el.textContent || '';
+      const len = Math.max(from.length, target.length);
+      const start = performance.now();
+      el.setAttribute('data-scrambling', '');
+      const frame = (now: number) => {
+        if (!alive) return resolve();
+        const t = Math.min(1, (now - start) / dur);
+        let out = '';
+        for (let i = 0; i < len; i++) {
+          const settle = (i + 1) / len;
+          if (t >= settle) out += target[i] ?? '';
+          else if (t >= settle - 0.5) out += GLYPHS[(Math.random() * GLYPHS.length) | 0];
+          else out += from[i] ?? '';
+        }
+        el.textContent = out;
+        if (t < 1) requestAnimationFrame(frame);
+        else {
+          el.textContent = target;
+          el.dataset.text = target;
+          el.removeAttribute('data-scrambling');
+          resolve();
+        }
+      };
+      requestAnimationFrame(frame);
+    });
+
+  const typeTo = (el: HTMLElement, target: string, step: number) =>
+    new Promise<void>((resolve) => {
+      if (rm) {
+        el.textContent = target;
+        return resolve();
+      }
+      el.setAttribute('data-typing', '');
+      let cur = el.textContent || '';
+      const tick = () => {
+        if (!alive) return resolve();
+        if (!target.startsWith(cur)) cur = cur.slice(0, -1);
+        else if (cur.length < target.length) cur = target.slice(0, cur.length + 1);
+        else {
+          el.removeAttribute('data-typing');
+          return resolve();
+        }
+        el.textContent = cur;
+        setTimeout(tick, step);
+      };
+      tick();
+    });
+
+  const go = async (to: 'name' | 'handle') => {
+    if (running || to === state) return;
+    running = true;
+    root.setAttribute('data-state', to === 'handle' ? 'to-handle' : 'to-name');
+    if (to === 'handle') {
+      await Promise.all([typeTo(who, WHO, 95), scrambleTo(tail, HANDLE, 800)]);
+    } else {
+      await Promise.all([typeTo(who, '', 70), scrambleTo(tail, NAME, 800)]);
+    }
+    if (!alive) return;
+    state = to;
+    root.setAttribute('data-state', to);
+    btn.setAttribute('aria-pressed', String(to === 'handle'));
+    btn.setAttribute(
+      'aria-label',
+      to === 'handle' ? 'Show the name: Ahmad Shaukat' : 'Show the handle: ahmad who secures',
+    );
+    running = false;
+  };
+
+  const schedule = (delay?: number) => {
+    clearTimeout(timer as number);
+    if (rm || !alive) return;
+    const wait = delay ?? (state === 'name' ? 2600 : 3400);
+    timer = setTimeout(async () => {
+      if (visible && !document.hidden) await go(state === 'name' ? 'handle' : 'name');
+      schedule();
+    }, wait);
+  };
+
+  btn.addEventListener('click', async () => {
+    clearTimeout(timer as number);
+    await go(state === 'name' ? 'handle' : 'name');
+    schedule(3800);
+  });
+
+  const io = new IntersectionObserver((entries) => {
+    visible = entries[0]?.isIntersecting ?? true;
+  });
+  io.observe(root);
+
+  schedule(2600);
+  onCleanup(() => {
+    alive = false;
+    clearTimeout(timer as number);
+    io.disconnect();
+  });
+}
+
 function initTyper() {
   const el = qs('[data-typer]');
   if (!el) return;
@@ -546,6 +667,7 @@ document.addEventListener('astro:page-load', () => {
   initDecrypt();
   initReveal();
   initTyper();
+  initNameMorph();
   initThreat();
   initReading();
   initToc();
