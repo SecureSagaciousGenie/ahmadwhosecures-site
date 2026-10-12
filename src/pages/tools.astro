@@ -1,70 +1,87 @@
 ---
 // Author: Ahmad Shaukat
 import Base from '../layouts/Base.astro';
+import Decrypt from '../components/Decrypt.astro';
+import Status from '../components/Status.astro';
 
 const repo = 'https://github.com/SecureSagaciousGenie/Win11-Security-Optimizer';
+
+const features = [
+  ['Security', 'Audits firewall, Defender, SmartScreen, UAC, SMBv1, LLMNR, AutoRun, RDP and more. Fixes are tiered Safe, Elevated, High-risk or Audit-only.'],
+  ['Investigate', 'Hidden admins, backdoor accounts, persistence, exposed remote access, Defender exclusions and hosts-file tampering, explained in plain English.'],
+  ['Deep Scan', 'Native process and event-log hunt: masquerading binaries, encoded PowerShell, download cradles, LOLBin abuse and log clearing.'],
+  ['Pro Tools', 'Opt-in Hayabusa and Chainsaw, downloaded on consent from official releases and checked against a pinned SHA-256.'],
+  ['Debloat', 'Ticked removal of consumer apps with reinstall notes. Every removal is logged and reversible from the MS Store.'],
+  ['Restore and logs', 'Restore point first, JSON before-state for every change, a rollback script and a full session transcript.'],
+];
 ---
 
 <Base
   title="Tools"
   description="Win11-Security-Optimizer: a free, open-source Windows 11 hardening, debloat and compromise-triage tool where every change is backed up and reversible."
 >
-  <div class="wrap">
+  <div class="container">
     <header class="page-head">
-      <h1>Tools</h1>
-      <p>Software I build and maintain in the open. MIT licensed unless stated.</p>
+      <p class="crumbs"><a href="/">~</a>/tools</p>
+      <h1><Decrypt text="Tools" /></h1>
+      <p class="lede">Software I build and maintain in the open. MIT licensed unless stated.</p>
     </header>
 
-    <section aria-labelledby="w11-title">
-      <div class="section-head">
-        <h2 id="w11-title">Win11-Security-Optimizer</h2>
-        <p><a href={repo} rel="noopener">Source on GitHub</a></p>
-      </div>
-      <div class="cols" style="margin-top: 2rem">
-        <div class="stack">
-          <p>
-            A Windows 11 security tool with a GUI for people who own the machine but do not live in PowerShell.
-            It audits and hardens security settings, removes preinstalled apps, checks for signs of compromise
-            and manages startup items. It runs from a batch file on the PowerShell 5.1 that ships with Windows,
-            so there is no installer and no unsigned binary for SmartScreen to quarantine.
-          </p>
-          <p>
-            The design rule is that nothing changes without a tick and a confirmation, and everything that
-            changes can be undone. Before the first change it creates a System Restore point. Every change
-            writes its before-state to a JSON backup and appends an undo step to a rollback script. Each fix
-            is re-read after it is applied to confirm it took effect.
-          </p>
-          <p>
-            <a href="/writing/building-a-reversible-windows-hardening-tool/">Read the design write-up</a>
-          </p>
+    <section class="split" aria-labelledby="w11-title">
+      <div class="panel hud card" data-reveal>
+        <p class="card-label">github.com/SecureSagaciousGenie</p>
+        <h2 id="w11-title" style="font-size: var(--step-3)">Win11-Security-Optimizer</h2>
+        <div style="margin-top: 1rem"><Status status="Shipped" label="Shipped, active development" /></div>
+        <p>
+          A Windows 11 security tool with a GUI for people who own the machine but do not live in PowerShell. It runs
+          from a batch file on the PowerShell 5.1 that ships with Windows, so there is no installer and no unsigned binary
+          for SmartScreen to quarantine.
+        </p>
+        <p>
+          Nothing changes without a tick and a confirmation, and everything that changes can be undone. Each fix is
+          re-read after it is applied to confirm it took effect.
+        </p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href={repo} target="_blank" rel="noopener">View source</a>
+          <a class="btn btn-ghost" href="/writing/building-a-reversible-windows-hardening-tool/">Read the design notes</a>
         </div>
-        <table class="facts">
-          <thead>
-            <tr><th scope="col">Area:</th><th scope="col">What it does:</th></tr>
-          </thead>
-          <tbody>
-            <tr>
-              <th scope="row">Security</th>
-              <td>Audits firewall, Defender, SmartScreen, UAC, SMBv1, LLMNR, AutoRun, RDP and more. Fixes are tiered Safe, Elevated, High-risk or Audit-only.</td>
-            </tr>
-            <tr>
-              <th scope="row">Investigate</th>
-              <td>Hidden admins, backdoor accounts, persistence, exposed remote access, Defender exclusions and hosts-file tampering, in plain English.</td>
-            </tr>
-            <tr>
-              <th scope="row">Deep Scan</th>
-              <td>Native process and event-log hunt: masquerading binaries, encoded PowerShell, download cradles, LOLBin abuse, log clearing.</td>
-            </tr>
-            <tr>
-              <th scope="row">Pro Tools</th>
-              <td>Opt-in Hayabusa and Chainsaw, downloaded on consent from official releases and verified against a pinned SHA-256.</td>
-            </tr>
-            <tr>
-              <th scope="row">Debloat and startup</th>
-              <td>Ticked removal of consumer apps with reinstall notes; reversible startup toggles that rename rather than delete.</td>
-            </tr>
-          </tbody>
-        </table>
+      </div>
+
+      <div class="panel terminal" data-reveal style="--reveal-delay: 0.1s">
+        <div class="codeblock-bar">
+          <span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Windows PowerShell 5.1</span>
+          <span>elevated</span>
+        </div>
+        <div class="terminal-body" aria-label="Example session showing how each change is protected">
+          <p class="terminal-line"><span class="p">PS&gt;</span> .\Start.bat</p>
+          <p class="terminal-line"><span class="out">[scan] read-only audit complete, 0 changes made</span></p>
+          <p class="terminal-line"><span class="out">[user] ticked: disable SMBv1 (Elevated)</span></p>
+          <p class="terminal-line"><span class="out">[+] System Restore point created</span></p>
+          <p class="terminal-line"><span class="out">[+] before-state written to Backup_*.json</span></p>
+          <p class="terminal-line"><span class="out">[+] undo step appended to Rollback_*.ps1</span></p>
+          <p class="terminal-line"><span class="p">[ok]</span> verified after apply: SMBv1 disabled</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="tabs-title">
+      <div class="section-head" data-reveal>
+        <div>
+          <p class="kicker">ls ./tabs</p>
+          <h2 id="tabs-title">What it does</h2>
+        </div>
+        <p>Six tabs. Scans are read-only; changes are tiered by risk and every one is backed up first.</p>
+      </div>
+      <div class="grid-cards">
+        {
+          features.map(([name, text], i) => (
+            <article class="panel card" data-reveal style={`--reveal-delay:${i * 0.06}s`}>
+              <p class="card-label">tab_{String(i + 1).padStart(2, '0')}</p>
+              <h3>{name}</h3>
+              <p>{text}</p>
+            </article>
+          ))
+        }
       </div>
     </section>
   </div>

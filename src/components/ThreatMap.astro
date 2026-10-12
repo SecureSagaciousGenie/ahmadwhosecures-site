@@ -1,0 +1,18 @@
+---
+// Author: Ahmad Shaukat
+// Hero animation: a simulated threat surface. Decorative only; described for screen readers.
+---
+
+<div class="panel hud threat" data-threat>
+  <canvas data-threat-canvas aria-hidden="true"></canvas>
+  <div class="threat-hud" aria-hidden="true">
+    <div class="tl"><span class="live">&#9679; RUNNING</span><br />threat surface<br />defense in depth</div>
+    <div class="tr">inspected <b data-tm="inspected">0</b><br />blocked <b class="red" data-tm="blocked">0</b></div>
+    <div class="bl">session <b data-tm="uptime">00:00</b></div>
+    <div class="br">simulated traffic<br />not live telemetry</div>
+  </div>
+  <p class="sr-only">
+    Decorative animation: a simulated network map. Traffic flows between security disciplines around a central
+    shield, and hostile packets are blocked at the perimeter.
+  </p>
+</div>

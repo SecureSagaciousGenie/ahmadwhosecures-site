@@ -1,28 +1,34 @@
 ---
 // Author: Ahmad Shaukat
-// Dated list of articles.
+// Field notes rendered as a log feed.
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
   items: CollectionEntry<'writing'>[];
 }
 const { items } = Astro.props;
-const fmt = (d: Date) =>
-  d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const tag = (t: string) => '#' + t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
 ---
 
-<ul class="entries">
+<ol class="feed">
   {
-    items.map((item) => (
-      <li class="entry">
-        <time datetime={item.data.date.toISOString().slice(0, 10)}>{fmt(item.data.date)}</time>
+    items.map((item, i) => (
+      <li class="feed-item" data-reveal style={`--reveal-delay:${i * 0.06}s`}>
+        <div class="feed-time">
+          <time datetime={iso(item.data.date)}>[{iso(item.data.date)}]</time>
+          <span class="tag">{tag(item.data.topics[0])}</span>
+        </div>
         <div>
           <h3>
             <a href={`/writing/${item.id}/`}>{item.data.title}</a>
           </h3>
           <p>{item.data.description}</p>
         </div>
+        <span class="feed-go" aria-hidden="true">
+          read &gt;
+        </span>
       </li>
     ))
   }
-</ul>
+</ol>

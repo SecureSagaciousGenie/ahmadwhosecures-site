@@ -1,6 +1,7 @@
 ---
 // Author: Ahmad Shaukat
 import Base from '../../layouts/Base.astro';
+import Decrypt from '../../components/Decrypt.astro';
 import { getCollection, render } from 'astro:content';
 import { site } from '../../site.config';
 
@@ -11,73 +12,65 @@ export async function getStaticPaths() {
 
 const { entry } = Astro.props;
 const { Content, headings } = await render(entry);
-const fmt = (d: Date) =>
-  d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
 const sections = headings.filter((h) => h.depth === 2);
+const iso = (d: Date) => d.toISOString().slice(0, 10);
+const words = (entry.body ?? '').split(/\s+/).filter(Boolean).length;
+const minutes = Math.max(1, Math.round(words / 220));
 ---
 
 <Base title={entry.data.title} description={entry.data.description} type="article" published={entry.data.date}>
-  <div class="wrap">
-    <header class="doc-head">
-      <h1>{entry.data.title}</h1>
+  <div class="read-progress" aria-hidden="true" data-read-progress></div>
+  <div class="container">
+    <header class="page-head">
+      <p class="crumbs"><a href="/">~</a>/<a href="/writing/">writing</a>/{entry.id}</p>
+      <h1><Decrypt text={entry.data.title} /></h1>
       <p class="lede">{entry.data.description}</p>
-      <p class="byline">
-        {site.name}. Published <time datetime={entry.data.date.toISOString().slice(0, 10)}>{fmt(entry.data.date)}</time>
-        {
-          entry.data.updated && (
-            <>
-              , updated <time datetime={entry.data.updated.toISOString().slice(0, 10)}>{fmt(entry.data.updated)}</time>
-            </>
-          )
-        }
-        .
-      </p>
+      <div class="meta-row">
+        <span>{site.name}</span>
+        <time datetime={iso(entry.data.date)}>{iso(entry.data.date)}</time>
+        {entry.data.updated && <span>updated {iso(entry.data.updated)}</span>}
+        <span>{minutes} min read</span>
+      </div>
     </header>
+
     <div class="doc">
-      <article class="prose">
+      <article class="doc-main prose">
         <Content />
       </article>
       <aside class="doc-aside" aria-label="Article details">
-        <dl>
-          <dt>Topics:</dt>
-          <dd>{entry.data.topics.join(', ')}</dd>
-          {
-            sections.length > 1 && (
-              <>
-                <dt>Sections:</dt>
-                <dd>
-                  <ul class="toc">
-                    {sections.map((h) => (
-                      <li>
-                        <a href={`#${h.slug}`}>{h.text}</a>
-                      </li>
-                    ))}
-                  </ul>
-                </dd>
-              </>
-            )
-          }
-        </dl>
+        <section class="panel hud aside-card" data-reveal>
+          <h2>Topics</h2>
+          <ul class="chips">{entry.data.topics.map((t) => <li class="chip">{t}</li>)}</ul>
+        </section>
+        {
+          sections.length > 1 && (
+            <section class="panel aside-card toc-card">
+              <h2>Sections</h2>
+              <ol class="toc" data-toc>
+                {sections.map((h) => (
+                  <li>
+                    <a href={`#${h.slug}`}>{h.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          )
+        }
+        {
+          sections.length > 1 && (
+            <details class="panel toc-mobile">
+              <summary>Sections ({sections.length})</summary>
+              <ol class="toc" data-toc>
+                {sections.map((h) => (
+                  <li>
+                    <a href={`#${h.slug}`}>{h.text}</a>
+                  </li>
+                ))}
+              </ol>
+            </details>
+          )
+        }
       </aside>
     </div>
   </div>
 </Base>
-
-<style>
-  .toc {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-  }
-  .toc li {
-    margin-top: 0.4rem;
-  }
-  .toc a {
-    color: var(--ink-2);
-    text-decoration: none;
-  }
-  .toc a:hover {
-    color: var(--accent-ink);
-    text-decoration: underline;
-  }
-</style>

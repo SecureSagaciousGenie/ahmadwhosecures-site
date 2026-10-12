@@ -3,14 +3,18 @@
 import Base from '../layouts/Base.astro';
 ---
 
-<Base title="Page not found">
-  <div class="wrap">
-    <header class="page-head">
-      <h1>Page not found</h1>
-      <p>
-        This address does not match a page on the site. Go to the <a href="/">home page</a>, the
-        <a href="/work/">case studies</a> or the <a href="/writing/">writing</a>.
-      </p>
-    </header>
+<Base title="Route not found">
+  <div class="container denied">
+    <p class="code" aria-hidden="true">404</p>
+    <p class="kicker">route lookup failed</p>
+    <h1 style="font-size: var(--step-3)">Access denied: this route does not exist.</h1>
+    <p style="color: var(--ink-2); max-width: 56ch">
+      The address does not match a page on this site. Head back to a known route.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/">Return to base</a>
+      <a class="btn btn-ghost" href="/work/">Case files</a>
+      <a class="btn btn-ghost" href="/writing/">Field notes</a>
+    </div>
   </div>
 </Base>

@@ -1,10 +1,14 @@
 ---
 // Author: Ahmad Shaukat
-// Base page shell: metadata, header, footer.
-import '@fontsource-variable/public-sans';
-import '@fontsource-variable/source-serif-4';
+// Base page shell: metadata, persistent header and HUD, page transitions.
+import '@fontsource/chakra-petch/600.css';
+import '@fontsource/chakra-petch/700.css';
+import '@fontsource-variable/ibm-plex-sans';
+import '@fontsource-variable/jetbrains-mono';
 import '../styles/global.css';
-import { site, nav } from '../site.config';
+import { ClientRouter } from 'astro:transitions';
+import Header from '../components/Header.astro';
+import { site } from '../site.config';
 
 interface Props {
   title?: string;
@@ -16,25 +20,33 @@ interface Props {
 const { title, description = site.description, type = 'website', published } = Astro.props;
 const fullTitle = title ? `${title} | ${site.name}` : `${site.name} | ${site.role}`;
 const canonical = new URL(Astro.url.pathname, site.url).href;
-const path = Astro.url.pathname;
-const isCurrent = (href: string) => (href === '/' ? path === '/' : path.startsWith(href));
 const year = new Date().getFullYear();
+
+const cyber = {
+  forwards: {
+    old: { name: 'cyber-out', duration: '0.32s', easing: 'cubic-bezier(.55,0,.75,.2)', fillMode: 'both' },
+    new: { name: 'cyber-in', duration: '0.6s', delay: '0.08s', easing: 'cubic-bezier(.16,1,.3,1)', fillMode: 'both' },
+  },
+  backwards: {
+    old: { name: 'cyber-out', duration: '0.32s', easing: 'cubic-bezier(.55,0,.75,.2)', fillMode: 'both' },
+    new: { name: 'cyber-in', duration: '0.6s', delay: '0.08s', easing: 'cubic-bezier(.16,1,.3,1)', fillMode: 'both' },
+  },
+};
 ---
 
 <!doctype html>
-<html lang="en">
+<html lang="en" transition:animate="none">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
     <meta name="author" content={site.name} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-    <link rel="alternate" type="application/rss+xml" title={`${site.name}: writing`} href="/rss.xml" />
+    <link rel="alternate" type="application/rss+xml" title={`${site.name}: field notes`} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="theme-color" content="#f7f8f6" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#12171d" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#070d16" />
     <meta property="og:type" content={type} />
     <meta property="og:title" content={title ?? site.name} />
     <meta property="og:description" content={description} />
@@ -43,49 +55,52 @@ const year = new Date().getFullYear();
     <meta name="twitter:card" content="summary" />
     {published && <meta property="article:published_time" content={published.toISOString()} />}
     <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <script is:inline src="/js/boot.js"></script>
+    <ClientRouter />
   </head>
   <body>
+    <div class="backdrop" aria-hidden="true" transition:persist="backdrop"></div>
     <a class="skip-link" href="#main">Skip to content</a>
-    <header class="site-header">
-      <div class="wrap">
-        <a class="brand" href="/" aria-label={`${site.name}, home`}>
-          <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
-            <rect x="1" y="1" width="30" height="30" rx="1"></rect>
-            <text x="16" y="20.5" text-anchor="middle">AS</text>
-          </svg>
-          <span>{site.name}</span>
-        </a>
-        <nav class="site-nav" aria-label="Main">
-          <ul>
-            {
-              nav.map((item) => (
-                <li>
-                  <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
-                    {item.label}
-                  </a>
-                </li>
-              ))
-            }
-          </ul>
-        </nav>
-      </div>
-    </header>
+    <div class="nav-progress" aria-hidden="true" transition:persist="nav-progress" data-nav-progress></div>
+    <div class="scan-beam" aria-hidden="true" transition:persist="scan-beam" data-scan-beam></div>
 
-    <main id="main">
+    <Header />
+
+    <main id="main" transition:animate={cyber}>
       <slot />
     </main>
 
-    <footer class="site-footer">
-      <div class="wrap">
-        <p>{site.name}, {site.role}. {site.location}. &copy; {year}</p>
+    <footer class="site-footer" transition:persist="footer">
+      <div class="container footer-row">
+        <p>&copy; {year} {site.name} // {site.role} // {site.location}</p>
         <ul>
-          <li><a href={site.linkedin} rel="me noopener">LinkedIn</a></li>
-          <li><a href={site.github} rel="me noopener">GitHub</a></li>
+          <li><a href={site.linkedin} target="_blank" rel="me noopener">LinkedIn</a></li>
+          <li><a href={site.github} target="_blank" rel="me noopener">GitHub</a></li>
           {site.email && <li><a href={`mailto:${site.email}`}>Email</a></li>}
-          <li><a href="/rss.xml">RSS</a></li>
-          <li><a href="/.well-known/security.txt">security.txt</a></li>
+          <li><a href="/rss.xml" data-astro-reload>RSS</a></li>
+          <li><a href="/.well-known/security.txt" data-astro-reload>security.txt</a></li>
         </ul>
       </div>
     </footer>
+
+    <div class="busy" role="status" aria-live="polite" transition:persist="busy" data-busy>
+      <div class="busy-head"><span class="spinner" aria-hidden="true"></span><span data-busy-title>ESTABLISHING LINK</span></div>
+      <ol class="busy-log" data-busy-log></ol>
+      <div class="busy-bar" aria-hidden="true"><i></i></div>
+    </div>
+
+    <div class="toasts" aria-live="polite" transition:persist="toasts" data-toasts></div>
+
+    <div class="boot" aria-hidden="true" transition:persist="boot" data-boot-overlay>
+      <div class="boot-inner">
+        <ol class="boot-log" data-boot-log></ol>
+        <div class="boot-bar"><i></i></div>
+        <p class="boot-skip">press any key to skip</p>
+      </div>
+    </div>
+
+    <script>
+      import '../scripts/app';
+    </script>
   </body>
 </html>
