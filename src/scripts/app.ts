@@ -339,7 +339,8 @@ function initNameMorph() {
   const HANDLE = 'ecures';
   const WHO = 'who';
   const rm = reduced();
-  let state: 'name' | 'handle' = 'name';
+  // Start from whatever the markup renders. The default is the handle.
+  let state: 'name' | 'handle' = root.dataset.state === 'name' ? 'name' : 'handle';
   let running = false;
   let alive = true;
   let visible = true;
@@ -417,6 +418,7 @@ function initNameMorph() {
       'aria-label',
       to === 'handle' ? 'Show the name: Ahmad Shaukat' : 'Show the handle: ahmad who secures',
     );
+    btn.title = to === 'handle' ? 'Ahmad Shaukat' : 'ahmad who secures';
     running = false;
   };
 
