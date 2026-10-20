@@ -8,8 +8,6 @@ interface Props {
 }
 
 const { built } = Astro.props;
-const builtIso = built.toISOString().slice(0, 10);
-const builtLabel = built.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 ---
 
 <footer class="ftr">
@@ -38,7 +36,6 @@ const builtLabel = built.toLocaleDateString('en-GB', { day: 'numeric', month: 's
         <dl>
           <div><dt>Owner</dt><dd>{site.name}</dd></div>
           <div><dt>Classification</dt><dd>Public</dd></div>
-          <div><dt>Last built</dt><dd><time datetime={builtIso}>{builtLabel}</time></dd></div>
           <div>
             <dt>Source</dt>
             <dd><a href={site.source} rel="noopener">ahmadwhosecures-site</a></dd>

@@ -250,10 +250,6 @@ kbd {
     font-size: 0.625rem;
     letter-spacing: 0.02em;
   }
-
-  .classbar-meta {
-    display: none !important;
-  }
 }
 
 /* ---------- Header ---------- */
@@ -304,16 +300,12 @@ kbd {
   transform: rotate(-6deg) scale(1.04);
 }
 
-.brand-mark .bm-page {
-  fill: var(--accent);
+.brand-mark {
+  filter: drop-shadow(0 0 6px rgb(90 170 255 / 0.45));
 }
 
-.brand-mark .bm-fold {
-  fill: var(--accent-deep);
-}
-
-.brand-mark .bm-tick {
-  stroke: var(--on-accent);
+:root[data-theme='light'] .brand-mark {
+  filter: drop-shadow(0 2px 4px rgb(13 22 37 / 0.25));
 }
 
 .brand-name {

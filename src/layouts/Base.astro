@@ -24,7 +24,6 @@ const fullTitle = title ? `${title} | ${site.name}` : `${site.name} | ${site.rol
 const canonical = new URL(Astro.url.pathname, site.url).href;
 const ogImage = new URL('/og.png', site.url).href;
 const built = new Date();
-const builtLabel = built.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
 ---
 
 <!doctype html>
@@ -37,6 +36,8 @@ const builtLabel = built.toLocaleDateString('en-GB', { day: 'numeric', month: 's
     <meta name="author" content={site.name} />
     <link rel="canonical" href={canonical} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="preload" href={displayFont} as="font" type="font/woff2" crossorigin />
     <link rel="alternate" type="application/rss+xml" title={`${site.name}: field notes`} href="/rss.xml" />
     <link rel="sitemap" href="/sitemap-index.xml" />
@@ -62,7 +63,6 @@ const builtLabel = built.toLocaleDateString('en-GB', { day: 'numeric', month: 's
     <div class="classbar" role="note" aria-label="Classification">
       <div class="container classbar-row">
         <p><span class="classbar-tag">Public</span>No CUI and no client identifiers on this site.</p>
-        <p class="classbar-meta">Built {builtLabel}</p>
       </div>
     </div>
 
