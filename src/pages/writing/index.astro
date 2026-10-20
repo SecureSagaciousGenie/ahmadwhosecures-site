@@ -14,6 +14,7 @@ const writing = (await getCollection('writing', ({ data }) => !data.draft)).sort
 >
   <div class="container">
     <header class="phead">
+      <div class="art" data-art="page" aria-hidden="true"></div>
       <ol class="crumbs">
         <li><a href="/">Home</a></li>
         <li aria-current="page">Field notes</li>

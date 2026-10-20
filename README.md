@@ -14,7 +14,8 @@ Source for [ahmadwhosecures.is-a.dev](https://ahmadwhosecures.is-a.dev): case st
 | `src/pages/` | Page templates |
 | `src/components/` | Header, footer, ledger, evidence trail, lab backdrop and ticker, sign-in panel, search and the rest |
 | `src/lib/signin.ts` | The example Conditional Access policy set and its evaluation |
-| `src/scripts/app.ts` | The only client script: progressive enhancement, see below |
+| `src/scripts/app.ts` | The client script: progressive enhancement, see below |
+| `src/scripts/art.ts` | Generated background art for the hero and page heads |
 | `src/styles/global.css` | All styling and design tokens, dark and light |
 | `public/_headers` | Security headers for Cloudflare Pages |
 | `public/.well-known/security.txt` | Security contact (RFC 9116); renew `Expires` before April 2027 |
@@ -31,6 +32,7 @@ The pages are complete as static HTML. `src/scripts/app.ts` adds the following, 
 | Hero name flips between "Ahmad who Secures" and "Ahmad Shaukat" | Shows "Ahmad who Secures"; screen readers always get the name |
 | Evidence trail autoplay, paused on hover, focus or when off screen | The requirement picker is a radio group and works in CSS alone |
 | Lab windows behind the evidence trail move slightly with the pointer | The windows, event stream and ticker still animate in CSS |
+| Background art: shield mesh, network field, circuit traces, signal pulses | A soft glow in the same place |
 | Sign-in panel re-evaluates on every change | Shows one rendered example and the policy trace |
 | Search: Ctrl+K, Cmd+K or / | Navigation links only |
 | Light and dark theme switch, remembered per browser | Dark theme |
@@ -47,6 +49,7 @@ Animation and autoplay stop when the visitor's system asks for reduced motion. P
 | Theme | Dark by default; a full light theme behind the switch |
 | Code | Shiki with `github-light` and `github-dark-default`, chosen by the page theme |
 | Hero backdrop | A DFIR lab session behind the evidence trail: event stream, timeline, process tree and a KAPE terminal, all lab data from LAB-WS01 |
+| Background art | Original and generated in the browser from a fixed seed: no image file, no licence, and it follows the theme |
 
 ## Local build
 

@@ -4,6 +4,7 @@
 // evidence trail all work without it.
 import { evaluate, type Scenario } from '../lib/signin';
 import { renderResult, summarise } from '../lib/signin-render';
+import { mountArt } from './art';
 
 const qs = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 const qsa = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) =>
@@ -179,6 +180,10 @@ function initTrail() {
   });
   new IntersectionObserver(([entry]) => hold('offscreen', !entry.isIntersecting)).observe(trail);
   document.addEventListener('visibilitychange', () => hold('hidden', document.hidden));
+}
+
+function initArt() {
+  for (const host of qsa('[data-art]')) mountArt(host);
 }
 
 function initLab() {
@@ -424,6 +429,7 @@ initHeader();
 initTheme();
 initMorph();
 initTrail();
+initArt();
 initLab();
 initSim();
 initPalette();
