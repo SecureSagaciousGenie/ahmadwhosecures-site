@@ -1,0 +1,29 @@
+---
+// Author: Ahmad Shaukat
+// A status line from the lab, scrolling above the facts strip. Decorative and lab data only.
+const items = [
+  'LAB-WS01: KapeTriage collection complete',
+  'Container hashed, SHA-256 recorded in the case notes',
+  '!EZParser modules parsed to CSV',
+  'THOR Lite filescan: 1 alert, 2 notices',
+  'Wazuh rule 100005 fired: PowerShell with an encoded command',
+  'Case opened in TheHive, observables sent to Cortex',
+  'Hayabusa Sigma hunt: 4 detections to review',
+  'Evidence pack written with a SHA-256 manifest',
+  'Lab data only',
+];
+---
+
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track">
+    {
+      [0, 1].map(() => (
+        <p class="ticker-run">
+          {items.map((it) => (
+            <span class="ticker-item">{it}</span>
+          ))}
+        </p>
+      ))
+    }
+  </div>
+</div>

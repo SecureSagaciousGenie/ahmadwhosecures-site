@@ -1,0 +1,116 @@
+---
+// Author: Ahmad Shaukat
+// Hero backdrop: the windows of a DFIR lab session stacked behind the evidence trail.
+// Decorative only and lab data only: LAB-WS01 is a lab machine with planted artifacts,
+// addresses are examples, and the encoded command is redacted on purpose.
+const stream: [string, string, string, 'info' | 'review' | 'alert'][] = [
+  ['14:02:11', '4624', 'Logon, type 2, lab\\analyst', 'info'],
+  ['14:02:15', '1', 'Process create: explorer.exe', 'info'],
+  ['14:03:02', '3', 'Network connect: 10.0.10.20:1514', 'info'],
+  ['14:03:40', '7045', 'Service installed: LabTestSvc', 'review'],
+  ['14:04:05', '1', 'powershell.exe -enc \u2022\u2022\u2022\u2022\u2022\u2022\u2022\u2022', 'alert'],
+  ['14:04:06', '4104', 'Script block logged', 'review'],
+  ['14:04:31', '11', 'File created: Downloads\\eicar.com', 'alert'],
+  ['14:05:12', '13', 'Registry set: CurrentVersion\\Run\\Updater', 'review'],
+  ['14:06:40', '4688', 'Process create: schtasks.exe /create', 'review'],
+  ['14:07:02', '1102', 'Security log cleared', 'alert'],
+];
+
+const timeline: [string, string, string][] = [
+  ['14:04:05', 'Prefetch', 'POWERSHELL.EXE, run count 3'],
+  ['14:04:06', 'Amcache', 'powershell.exe, first run'],
+  ['14:04:31', '$MFT', 'Downloads\\eicar.com created'],
+  ['14:05:12', 'Registry', 'HKCU Run\\Updater added'],
+  ['14:06:40', 'EVTX', '4688 schtasks.exe /create'],
+];
+
+const tree: [number, string, string, '' | 'ok' | 'review' | 'alert'][] = [
+  [0, 'explorer.exe', '4120', ''],
+  [1, 'cmd.exe', '5528', ''],
+  [2, 'powershell.exe', '6012', 'alert'],
+  [3, 'schtasks.exe', '6340', 'review'],
+  [0, 'services.exe', '812', ''],
+  [1, 'wazuh-agent.exe', '2280', 'ok'],
+];
+---
+
+<div class="lab" aria-hidden="true">
+  <div class="lab-w lab-w--stream" style="--depth:0.5">
+    <div class="lab-float" style="--dur:16s">
+      <div class="lab-bar"><span>Sysmon and Security, LAB-WS01</span><span class="lab-live">live</span></div>
+      <div class="lab-body lab-stream">
+        <div class="lab-scroll">
+          {
+            [0, 1].map(() =>
+              stream.map(([t, id, text, tag]) => (
+                <p class="lab-row" data-tag={tag}>
+                  <span class="lab-t">{t}</span>
+                  <span class="lab-id">{id}</span>
+                  <span class="lab-x">{text}</span>
+                  <span class="lab-tag">{tag}</span>
+                </p>
+              )),
+            )
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab-w lab-w--timeline" style="--depth:0.85">
+    <div class="lab-float" style="--dur:19s">
+      <div class="lab-bar"><span>Timeline, EZ tools output</span></div>
+      <div class="lab-body lab-timeline">
+        <p class="lab-row lab-head"><span>Time</span><span>Artifact</span><span>Detail</span></p>
+        <div class="lab-rows">
+          <span class="lab-sweep"></span>
+          {
+            timeline.map(([t, a, d]) => (
+              <p class="lab-row">
+                <span class="lab-t">{t}</span>
+                <span class="lab-a">{a}</span>
+                <span class="lab-x">{d}</span>
+              </p>
+            ))
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="lab-w lab-w--tree" style="--depth:0.35">
+    <div class="lab-float" style="--dur:14s">
+      <div class="lab-bar"><span>Process tree</span></div>
+      <div class="lab-body lab-tree">
+        {
+          tree.map(([level, name, pid, tag]) => (
+            <p class="lab-row" style={`--lvl:${level}`} data-tag={tag || undefined}>
+              <span class="lab-x">
+                {level > 0 && <span class="lab-branch">{'\u2514 '}</span>}
+                {name}
+              </span>
+              <span class="lab-id">{pid}</span>
+              {tag && <span class="lab-tag">{tag}</span>}
+            </p>
+          ))
+        }
+      </div>
+    </div>
+  </div>
+
+  <div class="lab-w lab-w--term" style="--depth:1">
+    <div class="lab-float" style="--dur:21s">
+      <div class="lab-bar"><span>Windows PowerShell</span></div>
+      <div class="lab-body lab-term">
+        <p><span class="lab-p">PS E:\cases\LAB-WS01&gt;</span> kape.exe --target KapeTriage --vhdx LAB-WS01</p>
+        <p class="lab-out">[+] KapeTriage: 2,431 files copied, container written</p>
+        <p><span class="lab-p">PS E:\cases\LAB-WS01&gt;</span> Get-FileHash -Algorithm SHA256 .\tdest\*.vhdx</p>
+        <p class="lab-out">SHA256 9F2C0D7E...A741AB LAB-WS01.vhdx</p>
+        <p>
+          <span class="lab-p">PS E:\cases\LAB-WS01&gt;</span>
+          <span class="lab-type">thor64-lite.exe -a Filescan -p F:\</span><span class="lab-caret"></span>
+        </p>
+      </div>
+    </div>
+  </div>
+</div>

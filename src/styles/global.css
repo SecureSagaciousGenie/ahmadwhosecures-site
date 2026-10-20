@@ -839,6 +839,419 @@ kbd {
   opacity: 0;
 }
 
+/* ---------- Lab backdrop ----------
+   Windows of a DFIR lab session stacked behind the evidence trail. Each window sits at its own
+   depth: nearer ones are sharper and move more with the pointer, farther ones are dimmer. */
+
+.hero-copy {
+  position: relative;
+  z-index: 2;
+}
+
+.hero-visual {
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+}
+
+.hero-visual .trail-wrap {
+  position: relative;
+  z-index: 1;
+}
+
+.hero-visual .trail-note {
+  padding: 0.55rem 0.75rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
+}
+
+.lab {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.lab-w {
+  position: absolute;
+  transform: translate3d(calc(var(--lx, 0) * var(--depth) * -18px), calc(var(--ly, 0) * var(--depth) * -12px), 0);
+  transition: transform 0.9s var(--ease-out);
+}
+
+.lab-w--stream {
+  z-index: 1;
+  top: -86px;
+  left: -48px;
+  width: 84%;
+  height: 232px;
+  opacity: 0.85;
+}
+
+.lab-w--timeline {
+  z-index: -1;
+  top: 14%;
+  right: -136px;
+  width: 60%;
+  height: 196px;
+  opacity: 0.6;
+  filter: blur(0.5px);
+}
+
+.lab-w--tree {
+  z-index: 1;
+  bottom: 18%;
+  right: -92px;
+  width: 52%;
+  height: 168px;
+  opacity: 0.82;
+}
+
+.lab-w--term {
+  z-index: -1;
+  bottom: -96px;
+  left: -64px;
+  width: 74%;
+  height: 146px;
+  opacity: 0.6;
+  filter: blur(0.6px);
+}
+
+.lab-float {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  border: 1px solid var(--line-2);
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: var(--shadow-2);
+  overflow: hidden;
+  animation: lab-float var(--dur, 16s) ease-in-out infinite alternate;
+}
+
+.lab-bar {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 0.75rem;
+  height: 26px;
+  padding: 0 0.7rem;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface-2);
+  font: 650 0.58rem/1 var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  white-space: nowrap;
+}
+
+.lab-live {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin-left: auto;
+  color: var(--ok);
+}
+
+.lab-live::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse 1.6s ease-in-out infinite;
+}
+
+.lab-body {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  padding: 0.5rem 0.7rem;
+  font: 450 0.66rem/1.85 var(--font-mono);
+  color: var(--ink-3);
+}
+
+.lab-body p {
+  margin: 0;
+}
+
+.lab-row {
+  display: grid;
+  gap: 0.6rem;
+  white-space: nowrap;
+}
+
+.lab-row > span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lab-id {
+  color: var(--ink-2);
+}
+
+.lab-tag {
+  font-size: 0.56rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  text-align: right;
+}
+
+.lab-row[data-tag='info'] .lab-tag {
+  color: var(--ink-3);
+}
+
+.lab-row[data-tag='review'] .lab-tag {
+  color: var(--accent-ink);
+}
+
+.lab-row[data-tag='alert'] .lab-tag {
+  color: var(--bad);
+}
+
+.lab-row[data-tag='alert'] .lab-x {
+  color: var(--ink);
+}
+
+.lab-row[data-tag='ok'] .lab-tag {
+  color: var(--ok);
+}
+
+.lab-stream {
+  -webkit-mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
+  mask-image: linear-gradient(transparent, #000 16%, #000 84%, transparent);
+}
+
+.lab-stream .lab-row {
+  grid-template-columns: 4.6em 2.8em minmax(0, 1fr) 3.8em;
+}
+
+.lab-scroll {
+  animation: lab-scroll 26s linear infinite;
+}
+
+.lab-timeline .lab-row {
+  grid-template-columns: 4.6em 5.4em minmax(0, 1fr);
+}
+
+.lab-head {
+  margin-bottom: 0.15rem;
+  border-bottom: 1px solid var(--line);
+  font-size: 0.56rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.lab-rows {
+  position: relative;
+}
+
+.lab-a {
+  color: var(--accent-ink);
+}
+
+.lab-sweep {
+  position: absolute;
+  left: -0.7rem;
+  right: -0.7rem;
+  top: 0;
+  height: 1.85em;
+  border-left: 2px solid var(--accent);
+  background: var(--accent-soft);
+  animation: lab-sweep 11s var(--ease-io) infinite;
+}
+
+.lab-tree .lab-row {
+  grid-template-columns: minmax(0, 1fr) 3em 3.8em;
+}
+
+.lab-tree .lab-x {
+  padding-left: calc(var(--lvl, 0) * 1.05em);
+  color: var(--ink-2);
+}
+
+.lab-branch {
+  color: var(--ink-3);
+}
+
+.lab-term p {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lab-p {
+  color: var(--accent-ink);
+}
+
+.lab-out {
+  color: var(--ink-2);
+}
+
+.lab-type {
+  display: inline-block;
+  width: 0;
+  overflow: hidden;
+  vertical-align: bottom;
+  white-space: nowrap;
+  animation: lab-type 2.6s steps(34, end) 1.4s forwards;
+}
+
+.lab-caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: -0.2em;
+  background: var(--accent);
+  animation: caret 1s steps(1) infinite;
+}
+
+.lab[data-paused] *,
+.ticker[data-paused] * {
+  animation-play-state: paused !important;
+}
+
+@keyframes lab-float {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes lab-scroll {
+  to {
+    transform: translateY(-50%);
+  }
+}
+
+@keyframes lab-sweep {
+  0%,
+  14% {
+    transform: translateY(0);
+  }
+  20%,
+  34% {
+    transform: translateY(100%);
+  }
+  40%,
+  54% {
+    transform: translateY(200%);
+  }
+  60%,
+  74% {
+    transform: translateY(300%);
+  }
+  80%,
+  94% {
+    transform: translateY(400%);
+  }
+  100% {
+    transform: translateY(0);
+  }
+}
+
+@keyframes lab-type {
+  to {
+    width: 34ch;
+  }
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+@media (max-width: 1000px) {
+  .hero-grid {
+    row-gap: 5.5rem;
+  }
+
+  .lab-w--stream {
+    top: -64px;
+    left: -24px;
+  }
+}
+
+@media (max-width: 640px) {
+  .lab-w--timeline,
+  .lab-w--term {
+    display: none;
+  }
+
+  .lab-w--stream {
+    top: -50px;
+    left: -10px;
+    width: 92%;
+    height: 176px;
+    opacity: 0.7;
+  }
+
+  .lab-w--tree {
+    bottom: 22%;
+    right: -40px;
+    width: 64%;
+    opacity: 0.7;
+  }
+}
+
+/* Ticker: a status line from the lab above the facts strip. */
+
+.ticker {
+  overflow: hidden;
+  border-bottom: 1px solid var(--line);
+  font: 500 0.7rem/1 var(--font-mono);
+  letter-spacing: 0.03em;
+  color: var(--ink-3);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker 80s linear infinite;
+}
+
+.ticker:hover .ticker-track {
+  animation-play-state: paused;
+}
+
+.ticker-run {
+  display: flex;
+  flex: none;
+  margin: 0;
+}
+
+.ticker-item {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.78rem 0 0.72rem;
+  white-space: nowrap;
+}
+
+.ticker-item::after {
+  content: '';
+  width: 5px;
+  height: 5px;
+  margin: 0 1.2rem;
+  background: var(--accent);
+  transform: rotate(45deg);
+  opacity: 0.85;
+}
+
+@keyframes ticker {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
 /* ---------- Evidence trail ---------- */
 
 .trail-wrap {
@@ -2209,9 +2622,9 @@ kbd {
 .cta-box {
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1.3fr) auto;
   gap: 2rem 3rem;
-  align-items: center;
+  align-items: end;
   padding: clamp(1.75rem, 5vw, 3.5rem);
   border: 1px solid var(--line-2);
   border-radius: 12px;
@@ -2248,7 +2661,6 @@ kbd {
   display: flex;
   flex-wrap: wrap;
   gap: 0.75rem;
-  margin-top: 1.75rem;
 }
 
 @media (max-width: 860px) {
@@ -3400,36 +3812,13 @@ kbd {
   color: var(--bad);
 }
 
-/* ---------- Insignia and discipline patches ---------- */
+/* ---------- Discipline patches ---------- */
 
-.insignia,
 .patch {
   display: block;
   max-width: 100%;
   height: auto;
   overflow: visible;
-}
-
-.insignia {
-  filter: drop-shadow(0 18px 30px rgb(0 0 0 / 0.42));
-}
-
-:root[data-theme='light'] .insignia {
-  filter: drop-shadow(0 16px 26px rgb(13 22 37 / 0.22));
-}
-
-.ins-text {
-  font-family: var(--font-display);
-  font-weight: 820;
-  font-stretch: 108%;
-}
-
-.ins-bezel {
-  transform-origin: 120px 120px;
-  animation: spin 90s linear infinite;
-}
-
-.patch {
   filter: drop-shadow(0 6px 12px rgb(0 0 0 / 0.38));
   transition: transform 0.35s var(--ease-out);
 }
@@ -3461,64 +3850,6 @@ kbd {
   transform: rotate(4deg);
 }
 
-.phead-split {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 2rem 4rem;
-  align-items: center;
-}
-
-.insignia-figure {
-  display: grid;
-  justify-items: center;
-  gap: 1rem;
-  width: 260px;
-  margin: 0;
-}
-
-.insignia-figure .insignia {
-  width: 230px;
-  transition: transform 0.6s var(--ease-out);
-}
-
-.insignia-figure:hover .insignia {
-  transform: rotate(-5deg) scale(1.03);
-}
-
-.insignia-figure figcaption {
-  font-size: 0.78rem;
-  line-height: 1.5;
-  color: var(--ink-3);
-  text-align: center;
-}
-
-.insignia-figure figcaption b {
-  color: var(--accent-ink);
-  font-weight: 650;
-}
-
-.cta-insignia {
-  width: 200px;
-  justify-self: end;
-  transform: rotate(-6deg);
-  transition: transform 0.6s var(--ease-out);
-}
-
-.cta-box:hover .cta-insignia {
-  transform: rotate(0deg) scale(1.03);
-}
-
-.ftr-brand {
-  display: flex;
-  align-items: center;
-  gap: 1.1rem;
-}
-
-.ftr-insignia {
-  width: 76px;
-  flex: none;
-}
-
 @media (max-width: 900px) {
   .ledger-id {
     flex-direction: row;
@@ -3531,32 +3862,6 @@ kbd {
   }
 }
 
-@media (max-width: 860px) {
-  .phead-split {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
-  .insignia-figure {
-    justify-items: start;
-    width: auto;
-  }
-
-  .insignia-figure .insignia {
-    width: 170px;
-  }
-
-  .insignia-figure figcaption {
-    text-align: left;
-    max-width: 40ch;
-  }
-
-  .cta-insignia {
-    order: -1;
-    width: 120px;
-    justify-self: start;
-  }
-}
-
 @media (max-width: 760px) {
   .phead-patched {
     padding-right: 0;
@@ -3566,12 +3871,6 @@ kbd {
     position: static;
     width: 64px;
     margin-bottom: 1.25rem;
-  }
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
   }
 }
 

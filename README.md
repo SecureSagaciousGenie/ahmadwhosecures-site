@@ -12,7 +12,7 @@ Source for [ahmadwhosecures.is-a.dev](https://ahmadwhosecures.is-a.dev): case st
 | `src/content/work/` | Case studies; each one is a row in the case-file ledger |
 | `src/content/writing/` | Articles |
 | `src/pages/` | Page templates |
-| `src/components/` | Header, footer, ledger, evidence trail, sign-in panel, search and the rest |
+| `src/components/` | Header, footer, ledger, evidence trail, lab backdrop and ticker, sign-in panel, search and the rest |
 | `src/lib/signin.ts` | The example Conditional Access policy set and its evaluation |
 | `src/scripts/app.ts` | The only client script: progressive enhancement, see below |
 | `src/styles/global.css` | All styling and design tokens, dark and light |
@@ -30,6 +30,7 @@ The pages are complete as static HTML. `src/scripts/app.ts` adds the following, 
 |---|---|
 | Hero name flips between "Ahmad who Secures" and "Ahmad Shaukat" | Shows "Ahmad who Secures"; screen readers always get the name |
 | Evidence trail autoplay, paused on hover, focus or when off screen | The requirement picker is a radio group and works in CSS alone |
+| Lab windows behind the evidence trail move slightly with the pointer | The windows, event stream and ticker still animate in CSS |
 | Sign-in panel re-evaluates on every change | Shows one rendered example and the policy trace |
 | Search: Ctrl+K, Cmd+K or / | Navigation links only |
 | Light and dark theme switch, remembered per browser | Dark theme |
@@ -45,6 +46,7 @@ Animation and autoplay stop when the visitor's system asks for reduced motion. P
 | Type | Hubot Sans (display, expanded width), IBM Plex Sans (text), JetBrains Mono (labels and code) |
 | Theme | Dark by default; a full light theme behind the switch |
 | Code | Shiki with `github-light` and `github-dark-default`, chosen by the page theme |
+| Hero backdrop | A DFIR lab session behind the evidence trail: event stream, timeline, process tree and a KAPE terminal, all lab data from LAB-WS01 |
 
 ## Local build
 

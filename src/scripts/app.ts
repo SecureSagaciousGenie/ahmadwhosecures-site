@@ -181,6 +181,43 @@ function initTrail() {
   document.addEventListener('visibilitychange', () => hold('hidden', document.hidden));
 }
 
+function initLab() {
+  const visual = qs('[data-lab]');
+  const lab = visual && qs('.lab', visual);
+  const ticker = qs('.ticker');
+  // Animations stop while their part of the page is off screen.
+  const watch = (el: Element | null) => {
+    if (!el) return;
+    new IntersectionObserver(([entry]) => el.toggleAttribute('data-paused', !entry.isIntersecting)).observe(el);
+  };
+  watch(lab);
+  watch(ticker);
+
+  const hero = qs('.hero');
+  if (!visual || !hero || reducedMotion() || !window.matchMedia('(pointer: fine)').matches) return;
+  let lx = 0;
+  let ly = 0;
+  const apply = perFrame(() => {
+    visual.style.setProperty('--lx', lx.toFixed(3));
+    visual.style.setProperty('--ly', ly.toFixed(3));
+  });
+  hero.addEventListener(
+    'pointermove',
+    (e) => {
+      const r = hero.getBoundingClientRect();
+      lx = ((e.clientX - r.left) / r.width) * 2 - 1;
+      ly = ((e.clientY - r.top) / r.height) * 2 - 1;
+      apply();
+    },
+    { passive: true },
+  );
+  hero.addEventListener('pointerleave', () => {
+    lx = 0;
+    ly = 0;
+    apply();
+  });
+}
+
 function initSim() {
   const sim = qs('[data-sim]');
   const out = sim && qs('[data-sim-out]', sim);
@@ -387,6 +424,7 @@ initHeader();
 initTheme();
 initMorph();
 initTrail();
+initLab();
 initSim();
 initPalette();
 initGlow();
