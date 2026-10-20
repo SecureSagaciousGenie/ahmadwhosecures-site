@@ -1,6 +1,7 @@
 ---
 // Author: Ahmad Shaukat
 // Footer with a document-control block, the way a controlled document carries its own metadata.
+import Insignia from './Insignia.astro';
 import { site, nav } from '../site.config';
 
 interface Props {
@@ -15,9 +16,12 @@ const builtLabel = built.toLocaleDateString('en-GB', { day: 'numeric', month: 's
 <footer class="ftr">
   <div class="container">
     <div class="ftr-grid">
-      <div>
-        <p class="ftr-name">{site.name}</p>
-        <p class="ftr-role">{site.role}. {site.location}.</p>
+      <div class="ftr-brand">
+        <Insignia size={76} class="ftr-insignia" />
+        <div>
+          <p class="ftr-name">{site.name}</p>
+          <p class="ftr-role">{site.role}. {site.location}.</p>
+        </div>
       </div>
 
       <nav class="ftr-nav" aria-label="Footer">

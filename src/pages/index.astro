@@ -9,6 +9,7 @@ import SignInSim from '../components/SignInSim.astro';
 import ChangeRecord from '../components/ChangeRecord.astro';
 import EntryList from '../components/EntryList.astro';
 import Icon from '../components/Icon.astro';
+import Insignia from '../components/Insignia.astro';
 import { getCollection } from 'astro:content';
 import { byNewest } from '../lib/sort';
 import { site } from '../site.config';
@@ -163,18 +164,19 @@ const facts = [
   <section class="section" aria-labelledby="cta-title">
     <div class="container">
       <div class="cta-box">
-        <div>
+        <div class="cta-copy">
           <p class="eyebrow"><span class="eyebrow-mark"></span>Contact</p>
           <h2 id="cta-title" style="margin-top: 1rem">Talk about CMMC, identity or detection work</h2>
           <p>
             LinkedIn is the fastest way to reach me. I work remotely with US clients, and from 2027 I plan to offer
             fractional security advisory work to small defense industrial base contractors.
           </p>
+          <div class="cta-actions">
+            <a class="btn btn-primary" href={site.linkedin} rel="me noopener">Message on LinkedIn<Icon name="arrow" /></a>
+            <a class="btn btn-ghost" href="/contact/">Other channels</a>
+          </div>
         </div>
-        <div class="cta-actions">
-          <a class="btn btn-primary" href={site.linkedin} rel="me noopener">Message on LinkedIn<Icon name="arrow" /></a>
-          <a class="btn btn-ghost" href="/contact/">Other channels</a>
-        </div>
+        <Insignia size={200} class="cta-insignia" />
       </div>
     </div>
   </section>

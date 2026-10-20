@@ -3,6 +3,7 @@
 // Case files as a ledger: one row per case. Client work shows its kind; only public work shows a status.
 import Status from './Status.astro';
 import Icon from './Icon.astro';
+import Patch from './Patch.astro';
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
@@ -18,7 +19,10 @@ const pad = (n: number) => String(n).padStart(2, '0');
     items.map((item, i) => (
       <li class="ledger-row reveal">
         <a class="ledger-link" href={`/work/${item.id}/`} data-glow>
-          <span class="ledger-id">CF-{pad(i + 1)}</span>
+          <span class="ledger-id">
+            <Patch kind={item.data.kind} size={46} />
+            <span>CF-{pad(i + 1)}</span>
+          </span>
           <span>
             <span class="ledger-title">{item.data.title}</span>
             <span class="ledger-claim">{item.data.claim}</span>

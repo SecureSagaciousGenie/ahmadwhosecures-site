@@ -1,0 +1,96 @@
+---
+// Author: Ahmad Shaukat
+// Hexagonal discipline patches that go with the insignia, one per kind of case file.
+type Kind = 'compliance' | 'migration' | 'detection' | 'endpoint' | 'opensource';
+
+interface Props {
+  kind: string;
+  size?: number;
+  class?: string;
+}
+
+const byLabel: Record<string, Kind> = {
+  'compliance program': 'compliance',
+  migration: 'migration',
+  'detection and response': 'detection',
+  'endpoint and identity': 'endpoint',
+  'open source': 'opensource',
+};
+
+const { kind: label, size = 48, class: cls } = Astro.props;
+const kind: Kind = byLabel[label.toLowerCase()] ?? 'compliance';
+const ivory = '#eef2f7';
+const gold = '#f2b33d';
+---
+
+<svg
+  class:list={['patch', cls]}
+  viewBox="0 0 64 72"
+  width={size}
+  height={size * 1.125}
+  aria-hidden="true"
+  focusable="false"
+  data-kind={kind}
+>
+  <path d="M32 1.5 L62 18.5 V53.5 L32 70.5 L2 53.5 V18.5 Z" fill="#b37a14"></path>
+  <path d="M32 3.5 L60 19.6 V52.4 L32 68.5 L4 52.4 V19.6 Z" fill="#0f1b2d" stroke="#f2b33d" stroke-width="1.8"></path>
+  <path
+    d="M32 8.5 L55.5 22 V50 L32 63.5 L8.5 50 V22 Z"
+    fill="none"
+    stroke={ivory}
+    stroke-opacity="0.3"
+    stroke-width="1"
+    stroke-dasharray="2 2.2"></path>
+
+  <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+    {
+      kind === 'compliance' && (
+        <>
+          <path d="M23 24 H36 L42 30 V49 H23 Z" stroke={ivory} stroke-width="1.8" />
+          <path d="M36 24 V30 H42" stroke={ivory} stroke-width="1.8" />
+          <path d="M27 34 H37 M27 38.5 H35" stroke={ivory} stroke-opacity="0.6" stroke-width="1.6" />
+          <path d="M27.5 43.5 L30 46 L35.5 40.5" stroke={gold} stroke-width="2.2" />
+        </>
+      )
+    }
+    {
+      kind === 'migration' && (
+        <>
+          <rect x="17.5" y="27" width="11" height="17" rx="1.5" stroke={ivory} stroke-width="1.8" />
+          <rect x="35.5" y="27" width="11" height="17" rx="1.5" stroke={gold} stroke-width="1.8" />
+          <path d="M20.5 32 H25.5 M20.5 36 H25.5" stroke={ivory} stroke-opacity="0.6" stroke-width="1.4" />
+          <path d="M28.5 49 C30 53 34 53 35.5 49 M33 48 L35.5 49.4 L36.6 46.6" stroke={gold} stroke-width="1.6" />
+        </>
+      )
+    }
+    {
+      kind === 'detection' && (
+        <>
+          <circle cx="32" cy="37" r="12.5" stroke={ivory} stroke-opacity="0.75" stroke-width="1.6" />
+          <circle cx="32" cy="37" r="6.5" stroke={ivory} stroke-opacity="0.45" stroke-width="1.4" />
+          <path d="M32 37 L40.5 27.8" stroke={gold} stroke-width="2" />
+          <circle cx="37.5" cy="33.2" r="1.9" fill={gold} stroke="none" />
+          <circle cx="32" cy="37" r="1.4" fill={ivory} stroke="none" />
+        </>
+      )
+    }
+    {
+      kind === 'endpoint' && (
+        <>
+          <rect x="20" y="25.5" width="24" height="16" rx="1.6" stroke={ivory} stroke-width="1.8" />
+          <path d="M16.5 46 H47.5" stroke={ivory} stroke-width="2.2" />
+          <path d="M27.5 33.5 L30.5 36.5 L36.5 30.5" stroke={gold} stroke-width="2.2" />
+        </>
+      )
+    }
+    {
+      kind === 'opensource' && (
+        <>
+          <path d="M26 28 L19 36.5 L26 45" stroke={ivory} stroke-width="2" />
+          <path d="M38 28 L45 36.5 L38 45" stroke={ivory} stroke-width="2" />
+          <path d="M34.5 26.5 L29.5 46.5" stroke={gold} stroke-width="2.2" />
+        </>
+      )
+    }
+  </g>
+</svg>

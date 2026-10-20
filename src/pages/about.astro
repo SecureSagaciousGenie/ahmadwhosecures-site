@@ -2,6 +2,7 @@
 // Author: Ahmad Shaukat
 import Base from '../layouts/Base.astro';
 import Status from '../components/Status.astro';
+import Insignia from '../components/Insignia.astro';
 import { site } from '../site.config';
 
 const experience = [
@@ -49,16 +50,25 @@ const toolset = [
   description="Ahmad Shaukat: principal information security engineer working across CMMC, NIST SP 800-171, ISO 27001, DFIR, SOC operations, DevOps and network engineering."
 >
   <div class="container">
-    <header class="phead">
-      <ol class="crumbs">
-        <li><a href="/">Home</a></li>
-        <li aria-current="page">About</li>
-      </ol>
-      <h1>About</h1>
-      <p class="lede">
-        I am a principal information security engineer. I lead security engineering at a US defense contractor, so the
-        controls I build and the evidence behind them are mine to answer for.
-      </p>
+    <header class="phead phead-split">
+      <div>
+        <ol class="crumbs">
+          <li><a href="/">Home</a></li>
+          <li aria-current="page">About</li>
+        </ol>
+        <h1>About</h1>
+        <p class="lede">
+          I am a principal information security engineer. I lead security engineering at a US defense contractor, so the
+          controls I build and the evidence behind them are mine to answer for.
+        </p>
+      </div>
+      <figure class="insignia-figure">
+        <Insignia size={230} label="Insignia: Ahmad who Secures, Semper proba" />
+        <figcaption>
+          <b>Semper proba</b>: always verify. Four stars for the four checks every sign-in passes: who, device, place
+          and risk.
+        </figcaption>
+      </figure>
     </header>
 
     <section class="about-grid doc-after" aria-labelledby="how-title">

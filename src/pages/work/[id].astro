@@ -3,6 +3,7 @@
 import Base from '../../layouts/Base.astro';
 import Status from '../../components/Status.astro';
 import EntryList from '../../components/EntryList.astro';
+import Patch from '../../components/Patch.astro';
 import { getCollection, render } from 'astro:content';
 import { byNewest } from '../../lib/sort';
 
@@ -24,7 +25,8 @@ const caseId = `CF-${String(index).padStart(2, '0')}`;
 <Base title={entry.data.title} description={entry.data.evidence} type="article">
   <div class="read-progress" aria-hidden="true" data-read-progress></div>
   <div class="container">
-    <header class="phead phead-doc">
+    <header class="phead phead-doc phead-patched">
+      <Patch kind={entry.data.kind} size={92} class="phead-patch" />
       <ol class="crumbs">
         <li><a href="/">Home</a></li>
         <li><a href="/work/">Case files</a></li>
