@@ -1,21 +1,25 @@
 // Author: Ahmad Shaukat
-// Background art for the hero and the inner page heads: a shield drawn as a node mesh, a
-// network field around it and circuit traces leading out, with signal pulses running along the
-// traces and a slow shield-shaped scan ring. Original artwork generated in the browser, so it
-// costs no image download, follows the theme, and the same seed always draws the same picture.
-// Purely decorative: the host element is aria-hidden and the page reads the same without it.
+// Background art: a shield drawn as a node mesh with a keyhole, a network field with padlock
+// nodes, circuit traces with signal pulses, particles dissolving off the shield edge, bokeh and a
+// slow shield-shaped scan ring. Original artwork generated in the browser: no image download,
+// it follows the theme, and a fixed seed draws the same picture on every visit.
+//
+// Three variants: "hero" (home, centred on the evidence panel), "page" (inner page heads) and
+// "ambient" (a faint fixed layer that the CSS mask keeps to the screen margins on wide screens).
+// Glow is drawn as soft halo strokes and pre-rendered sprites rather than canvas shadows, which
+// keeps the first frame fast on integrated graphics. Purely decorative; hosts are aria-hidden.
 
 type Theme = 'dark' | 'light';
-type Variant = 'hero' | 'page';
+type Variant = 'hero' | 'page' | 'ambient';
 type Pt = { x: number; y: number };
 
 interface Palette {
   line: string;
   node: string;
   amber: string;
-  glow: string;
   blob: string;
   blobAmber: string;
+  halo: number;
   blend: GlobalCompositeOperation;
 }
 
@@ -24,21 +28,30 @@ const PALETTES: Record<Theme, Palette> = {
     line: '92, 170, 255',
     node: '214, 236, 255',
     amber: '242, 179, 61',
-    glow: 'rgba(70, 180, 255, 0.85)',
     blob: 'rgba(40, 120, 255, 0.17)',
     blobAmber: 'rgba(242, 179, 61, 0.07)',
+    halo: 1,
     blend: 'lighter',
   },
   light: {
     line: '36, 87, 184',
     node: '28, 66, 138',
     amber: '168, 112, 15',
-    glow: '',
     blob: 'rgba(36, 87, 184, 0.07)',
     blobAmber: 'rgba(226, 160, 33, 0.07)',
+    halo: 0,
     blend: 'source-over',
   },
 };
+
+interface Shield {
+  focus: Pt;
+  R: number;
+  outline: Pt[];
+  mesh: [Pt, Pt][];
+  nodes: { p: Pt; amber: boolean }[];
+  keyhole: boolean;
+}
 
 interface Trace {
   pts: Pt[];
@@ -51,21 +64,17 @@ interface Trace {
 interface Scene {
   w: number;
   h: number;
-  focus: Pt;
-  R: number;
-  outline: Pt[];
-  mesh: [Pt, Pt][];
-  meshNodes: { p: Pt; amber: boolean }[];
-  field: Pt[];
+  shields: Shield[];
   fieldEdges: [Pt, Pt, number][];
+  field: Pt[];
   traces: Trace[];
   dust: { p: Pt; r: number; a: number; amber: boolean }[];
   locks: { p: Pt; s: number; amber: boolean }[];
   pixels: { p: Pt; s: number; a: number; amber: boolean }[];
   bokeh: { p: Pt; r: number; a: number; amber: boolean }[];
+  intensity: number;
 }
 
-/** Small seeded generator, so the composition is stable between visits. */
 const seeded = (seed: number) => () => {
   seed = (seed + 0x6d2b79f5) | 0;
   let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
@@ -74,6 +83,7 @@ const seeded = (seed: number) => () => {
 };
 
 const dist = (a: Pt, b: Pt) => Math.hypot(a.x - b.x, a.y - b.y);
+const scaleAbout = (poly: Pt[], c: Pt, s: number) => poly.map((p) => ({ x: c.x + (p.x - c.x) * s, y: c.y + (p.y - c.y) * s }));
 
 /** A heater shield: shoulders, straight sides, then a curve into the point. Closed loop. */
 function shieldOutline(c: Pt, R: number): Pt[] {
@@ -83,10 +93,7 @@ function shieldOutline(c: Pt, R: number): Pt[] {
     const t = i / 6;
     right.push({ x: c.x + hw * t, y: c.y - R + R * 0.26 * t * t });
   }
-  for (let i = 1; i <= 5; i++) {
-    const t = i / 5;
-    right.push({ x: c.x + hw, y: c.y - R * 0.74 + R * 0.79 * t });
-  }
+  for (let i = 1; i <= 5; i++) right.push({ x: c.x + hw, y: c.y - R * 0.74 + R * 0.79 * (i / 5) });
   const a = { x: c.x + hw, y: c.y + R * 0.05 };
   const k = { x: c.x + hw, y: c.y + R * 0.62 };
   const b = { x: c.x, y: c.y + R };
@@ -112,24 +119,18 @@ function inside(p: Pt, poly: Pt[]) {
   return hit;
 }
 
-const scaleAbout = (poly: Pt[], c: Pt, s: number) => poly.map((p) => ({ x: c.x + (p.x - c.x) * s, y: c.y + (p.y - c.y) * s }));
-
-function buildScene(variant: Variant, w: number, h: number, focus: Pt, R: number): Scene {
-  const rand = seeded(variant === 'hero' ? 20261012 : 20261019);
+function buildShield(rand: () => number, focus: Pt, R: number, keyhole: boolean): Shield {
   const outline = shieldOutline(focus, R);
-
-  // Shield mesh: outline ring plus a jittered grid inside, each point tied to its nearest neighbours.
   const step = R / 3.1;
-  const innerPts: Pt[] = [];
   const core = scaleAbout(outline, focus, 0.9);
+  const inner: Pt[] = [];
   for (let y = focus.y - R; y <= focus.y + R; y += step) {
     for (let x = focus.x - R; x <= focus.x + R; x += step) {
       const p = { x: x + (rand() - 0.5) * step * 0.7, y: y + (rand() - 0.5) * step * 0.7 };
-      if (inside(p, core)) innerPts.push(p);
+      if (inside(p, core)) inner.push(p);
     }
   }
-  const ring = outline.filter((_, i) => i % 1 === 0);
-  const all = [...ring, ...innerPts];
+  const all = [...outline, ...inner];
   const seen = new Set<string>();
   const mesh: [Pt, Pt][] = [];
   const link = (a: Pt, b: Pt) => {
@@ -139,29 +140,45 @@ function buildScene(variant: Variant, w: number, h: number, focus: Pt, R: number
       mesh.push([a, b]);
     }
   };
-  for (let i = 0; i < ring.length; i++) link(ring[i], ring[(i + 1) % ring.length]);
-  for (const p of innerPts) {
+  for (let i = 0; i < outline.length; i++) link(outline[i], outline[(i + 1) % outline.length]);
+  for (const p of inner) {
     all
       .filter((q) => q !== p)
       .sort((a, b) => dist(p, a) - dist(p, b))
       .slice(0, 3)
       .forEach((q) => link(p, q));
   }
-  const meshNodes = all.map((p) => ({ p, amber: rand() < 0.08 }));
+  return { focus, R, outline, mesh, nodes: all.map((p) => ({ p, amber: rand() < 0.08 })), keyhole };
+}
 
-  // Network field around the shield, denser near it.
-  const count = variant === 'hero' ? 150 : 70;
-  const reach = Math.max(w, h) * (variant === 'hero' ? 0.85 : 0.7);
-  const keepOut = scaleAbout(outline, focus, 1.12);
+function buildScene(variant: Variant, w: number, h: number, focus: Pt, R: number): Scene {
+  const rand = seeded(variant === 'hero' ? 20261012 : variant === 'page' ? 20261019 : 20261021);
+  const shields =
+    variant === 'ambient'
+      ? [
+          buildShield(rand, { x: -w * 0.02, y: h * 0.34 }, h * 0.3, false),
+          buildShield(rand, { x: w * 1.02, y: h * 0.7 }, h * 0.34, false),
+        ]
+      : [buildShield(rand, focus, R, true)];
+
+  const big = variant === 'hero';
+  const count = big ? 150 : variant === 'page' ? 70 : 110;
+  const reach = Math.max(w, h) * (big ? 0.85 : 0.7);
+  const keepOut = shields.map((s) => scaleAbout(s.outline, s.focus, 1.12));
   const field: Pt[] = [];
   for (let tries = 0; field.length < count && tries < count * 20; tries++) {
-    const ang = rand() * Math.PI * 2;
-    const r = R * 1.1 + Math.pow(rand(), 0.85) * reach;
-    const p = { x: focus.x + Math.cos(ang) * r * 1.25, y: focus.y + Math.sin(ang) * r };
-    if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40 || inside(p, keepOut)) continue;
+    let p: Pt;
+    if (variant === 'ambient') {
+      p = { x: rand() * w, y: rand() * h };
+    } else {
+      const ang = rand() * Math.PI * 2;
+      const r = R * 1.1 + Math.pow(rand(), 0.85) * reach;
+      p = { x: focus.x + Math.cos(ang) * r * 1.25, y: focus.y + Math.sin(ang) * r };
+    }
+    if (p.x < -40 || p.x > w + 40 || p.y < -40 || p.y > h + 40 || keepOut.some((k) => inside(p, k))) continue;
     field.push(p);
   }
-  const reachEdge = R * 0.62;
+  const reachEdge = variant === 'ambient' ? Math.min(w, h) * 0.16 : R * 0.62;
   const fieldEdges: [Pt, Pt, number][] = [];
   for (let i = 0; i < field.length; i++) {
     for (let j = i + 1; j < field.length; j++) {
@@ -170,138 +187,189 @@ function buildScene(variant: Variant, w: number, h: number, focus: Pt, R: number
     }
   }
 
-  // Circuit traces leaving the shield: straight, a 45 degree bend, straight, then a pad.
   const traces: Trace[] = [];
-  const tCount = variant === 'hero' ? 18 : 9;
-  for (let i = 0; i < tCount; i++) {
-    const start = outline[Math.floor(((i + rand() * 0.6) / tCount) * outline.length) % outline.length];
-    const v = { x: start.x - focus.x, y: start.y - focus.y };
-    const horiz = Math.abs(v.x) > Math.abs(v.y) * 0.9;
-    const dir = horiz ? { x: Math.sign(v.x) || 1, y: 0 } : { x: 0, y: Math.sign(v.y) || 1 };
-    const perp = horiz ? { x: 0, y: rand() < 0.5 ? -1 : 1 } : { x: rand() < 0.5 ? -1 : 1, y: 0 };
-    const l1 = R * (0.1 + rand() * 0.26);
-    const l2 = R * (0.08 + rand() * 0.2);
-    const l3 = R * (0.22 + rand() * 0.6);
-    const p0 = { x: start.x + dir.x * R * 0.04, y: start.y + dir.y * R * 0.04 };
-    const p1 = { x: p0.x + dir.x * l1, y: p0.y + dir.y * l1 };
-    const p2 = { x: p1.x + ((dir.x + perp.x) * l2) / Math.SQRT2, y: p1.y + ((dir.y + perp.y) * l2) / Math.SQRT2 };
-    const p3 = { x: p2.x + dir.x * l3, y: p2.y + dir.y * l3 };
-    const pts = [p0, p1, p2, p3];
-    const len = dist(p0, p1) + dist(p1, p2) + dist(p2, p3);
-    traces.push({ pts, len, period: 2.6 + rand() * 3.2, phase: rand() * 6, amber: rand() < 0.22 });
+  for (const s of shields) {
+    const tCount = big ? 18 : 9;
+    for (let i = 0; i < tCount; i++) {
+      const start = s.outline[Math.floor(((i + rand() * 0.6) / tCount) * s.outline.length) % s.outline.length];
+      const v = { x: start.x - s.focus.x, y: start.y - s.focus.y };
+      const horiz = Math.abs(v.x) > Math.abs(v.y) * 0.9;
+      const dir = horiz ? { x: Math.sign(v.x) || 1, y: 0 } : { x: 0, y: Math.sign(v.y) || 1 };
+      const perp = horiz ? { x: 0, y: rand() < 0.5 ? -1 : 1 } : { x: rand() < 0.5 ? -1 : 1, y: 0 };
+      const l1 = s.R * (0.1 + rand() * 0.26);
+      const l2 = s.R * (0.08 + rand() * 0.2);
+      const l3 = s.R * (0.22 + rand() * 0.6);
+      const p0 = { x: start.x + dir.x * s.R * 0.04, y: start.y + dir.y * s.R * 0.04 };
+      const p1 = { x: p0.x + dir.x * l1, y: p0.y + dir.y * l1 };
+      const p2 = { x: p1.x + ((dir.x + perp.x) * l2) / Math.SQRT2, y: p1.y + ((dir.y + perp.y) * l2) / Math.SQRT2 };
+      const p3 = { x: p2.x + dir.x * l3, y: p2.y + dir.y * l3 };
+      traces.push({
+        pts: [p0, p1, p2, p3],
+        len: dist(p0, p1) + dist(p1, p2) + dist(p2, p3),
+        period: 2.6 + rand() * 3.2,
+        phase: rand() * 6,
+        amber: rand() < 0.22,
+      });
+    }
   }
 
-  // Dust: faint points of light, mostly around the focus.
-  const dustCount = variant === 'hero' ? 320 : 130;
   const dust: Scene['dust'] = [];
+  const dustCount = big ? 320 : variant === 'page' ? 130 : 220;
   for (let i = 0; i < dustCount; i++) {
-    const ang = rand() * Math.PI * 2;
-    const r = Math.pow(rand(), 0.6) * reach * 1.1;
-    const p = { x: focus.x + Math.cos(ang) * r * 1.3, y: focus.y + Math.sin(ang) * r };
+    let p: Pt;
+    if (variant === 'ambient') p = { x: rand() * w, y: rand() * h };
+    else {
+      const ang = rand() * Math.PI * 2;
+      const r = Math.pow(rand(), 0.6) * reach * 1.1;
+      p = { x: focus.x + Math.cos(ang) * r * 1.3, y: focus.y + Math.sin(ang) * r };
+    }
     if (p.x < 0 || p.x > w || p.y < 0 || p.y > h) continue;
     dust.push({ p, r: 0.4 + rand() * 1.3, a: 0.08 + rand() * 0.55, amber: rand() < 0.08 });
   }
 
-  // Padlocks on a few network nodes away from the shield.
+  const lockMinX = w * (big ? 0.62 : 0.55);
   const locks = field
-    .filter((p) => dist(p, focus) > R * 1.6 && p.x > w * (variant === 'hero' ? 0.62 : 0.55))
+    .filter((p) => variant === 'ambient' || (p.x > lockMinX && dist(p, focus) > R * 1.6))
     .sort(() => rand() - 0.5)
-    .slice(0, variant === 'hero' ? 6 : 3)
+    .slice(0, big ? 6 : variant === 'page' ? 3 : 6)
     .map((p) => ({ p, s: 0.85 + rand() * 0.5, amber: rand() < 0.3 }));
 
-  // The shield's right edge dissolving into square particles.
-  const edge = outline.filter((p) => p.x > focus.x + R * 0.25);
+  // Each shield's inner edge dissolves into square particles.
   const pixels: Scene['pixels'] = [];
-  const pixCount = variant === 'hero' ? 260 : 120;
-  for (let i = 0; i < pixCount && edge.length; i++) {
-    const from = edge[Math.floor(rand() * edge.length)];
-    const k = Math.pow(rand(), 1.7);
-    const p = { x: from.x + k * R * 1.9 + rand() * R * 0.08, y: from.y + (rand() - 0.5) * R * (0.25 + k * 0.9) };
-    if (p.x > w || p.y < 0 || p.y > h) continue;
-    pixels.push({ p, s: (1 - k) * 2.6 + 0.6, a: (1 - k) * 0.85 + 0.08, amber: rand() < 0.1 });
+  for (const s of shields) {
+    const dir = variant === 'ambient' && s.focus.x > w / 2 ? -1 : 1;
+    const edge = s.outline.filter((p) => (p.x - s.focus.x) * dir > s.R * 0.25);
+    const n = big ? 260 : 120;
+    for (let i = 0; i < n && edge.length; i++) {
+      const from = edge[Math.floor(rand() * edge.length)];
+      const k = Math.pow(rand(), 1.7);
+      const p = {
+        x: from.x + dir * (k * s.R * 1.9 + rand() * s.R * 0.08),
+        y: from.y + (rand() - 0.5) * s.R * (0.25 + k * 0.9),
+      };
+      if (p.x < 0 || p.x > w || p.y < 0 || p.y > h) continue;
+      pixels.push({ p, s: (1 - k) * 2.6 + 0.6, a: (1 - k) * 0.85 + 0.08, amber: rand() < 0.1 });
+    }
   }
 
-  // Out-of-focus lights for depth.
   const bokeh: Scene['bokeh'] = [];
-  for (let i = 0; i < (variant === 'hero' ? 12 : 6); i++) {
-    const ang = rand() * Math.PI * 2;
-    const r = R * (0.9 + rand() * 2.4);
-    bokeh.push({
-      p: { x: focus.x + Math.cos(ang) * r * 1.2, y: focus.y + Math.sin(ang) * r * 0.8 },
-      r: R * (0.05 + rand() * 0.15),
-      a: 0.05 + rand() * 0.11,
-      amber: rand() < 0.3,
-    });
+  for (const s of shields) {
+    for (let i = 0; i < (big ? 12 : 6); i++) {
+      const ang = rand() * Math.PI * 2;
+      const r = s.R * (0.9 + rand() * 2.4);
+      bokeh.push({
+        p: { x: s.focus.x + Math.cos(ang) * r * 1.2, y: s.focus.y + Math.sin(ang) * r * 0.8 },
+        r: s.R * (0.05 + rand() * 0.15),
+        a: 0.05 + rand() * 0.11,
+        amber: rand() < 0.3,
+      });
+    }
   }
 
-  return { w, h, focus, R, outline, mesh, meshNodes, field, fieldEdges, traces, dust, locks, pixels, bokeh };
+  return { w, h, shields, field, fieldEdges, traces, dust, locks, pixels, bokeh, intensity: variant === 'ambient' ? 0.55 : 1 };
 }
 
-/** A small padlock: shackle arc over a body with a keyhole. */
-function drawLock(ctx: CanvasRenderingContext2D, c: Pt, scale: number, rgb: string) {
+/** A soft round glow, drawn once per colour and stamped wherever a node or pulse needs one. */
+const sprites = new Map<string, HTMLCanvasElement>();
+function glowSprite(rgb: string) {
+  let c = sprites.get(rgb);
+  if (c) return c;
+  c = document.createElement('canvas');
+  c.width = c.height = 64;
+  const g = c.getContext('2d');
+  if (g) {
+    const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grad.addColorStop(0, `rgba(${rgb}, 0.9)`);
+    grad.addColorStop(0.25, `rgba(${rgb}, 0.35)`);
+    grad.addColorStop(1, `rgba(${rgb}, 0)`);
+    g.fillStyle = grad;
+    g.fillRect(0, 0, 64, 64);
+  }
+  sprites.set(rgb, c);
+  return c;
+}
+
+function stamp(ctx: CanvasRenderingContext2D, rgb: string, p: Pt, size: number) {
+  ctx.drawImage(glowSprite(rgb), p.x - size / 2, p.y - size / 2, size, size);
+}
+
+function poly(ctx: CanvasRenderingContext2D, pts: Pt[], close = false) {
+  ctx.beginPath();
+  pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
+  if (close) ctx.closePath();
+}
+
+/** A glowing stroke: two wide faint halo passes under a thin bright core. */
+function glowStroke(ctx: CanvasRenderingContext2D, rgb: string, alpha: number, width: number, halo: number) {
+  if (halo) {
+    ctx.lineWidth = width * 5;
+    ctx.strokeStyle = `rgba(${rgb}, ${(alpha * 0.12 * halo).toFixed(3)})`;
+    ctx.stroke();
+    ctx.lineWidth = width * 2.4;
+    ctx.strokeStyle = `rgba(${rgb}, ${(alpha * 0.22 * halo).toFixed(3)})`;
+    ctx.stroke();
+  }
+  ctx.lineWidth = width;
+  ctx.strokeStyle = `rgba(${rgb}, ${alpha.toFixed(3)})`;
+  ctx.stroke();
+}
+
+function drawLock(ctx: CanvasRenderingContext2D, c: Pt, scale: number, rgb: string, k: number, halo: number) {
   const bw = 11 * scale;
   const bh = 8.5 * scale;
-  ctx.lineWidth = 1.3;
-  ctx.strokeStyle = `rgba(${rgb}, 0.95)`;
-  ctx.fillStyle = `rgba(${rgb}, 0.14)`;
   ctx.beginPath();
   ctx.arc(c.x, c.y - bh * 0.42, bw * 0.3, Math.PI, 0);
-  ctx.stroke();
+  glowStroke(ctx, rgb, 0.95 * k, 1.3, halo);
   ctx.beginPath();
   ctx.rect(c.x - bw / 2, c.y - bh * 0.42, bw, bh);
+  ctx.fillStyle = `rgba(${rgb}, ${(0.14 * k).toFixed(3)})`;
   ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = `rgba(${rgb}, 0.95)`;
+  glowStroke(ctx, rgb, 0.95 * k, 1.3, halo);
+  ctx.fillStyle = `rgba(${rgb}, ${(0.95 * k).toFixed(3)})`;
   ctx.beginPath();
   ctx.arc(c.x, c.y + bh * 0.05, 1.3 * scale, 0, Math.PI * 2);
   ctx.fill();
 }
 
-/** A keyhole at the heart of the shield. */
-function drawKeyhole(ctx: CanvasRenderingContext2D, f: Pt, R: number, rgb: string) {
+function drawKeyhole(ctx: CanvasRenderingContext2D, f: Pt, R: number, rgb: string, halo: number) {
   const top = f.y - R * 0.12;
-  ctx.lineWidth = 1.8;
-  ctx.strokeStyle = `rgba(${rgb}, 0.95)`;
-  ctx.fillStyle = `rgba(${rgb}, 0.12)`;
   ctx.beginPath();
   ctx.arc(f.x, top, R * 0.13, Math.PI * 0.72, Math.PI * 2.28);
   ctx.lineTo(f.x + R * 0.11, f.y + R * 0.26);
   ctx.lineTo(f.x - R * 0.11, f.y + R * 0.26);
   ctx.closePath();
+  ctx.fillStyle = `rgba(${rgb}, 0.12)`;
   ctx.fill();
-  ctx.stroke();
-}
-
-function pathPoly(ctx: CanvasRenderingContext2D, pts: Pt[], close = false) {
-  ctx.beginPath();
-  pts.forEach((p, i) => (i ? ctx.lineTo(p.x, p.y) : ctx.moveTo(p.x, p.y)));
-  if (close) ctx.closePath();
+  glowStroke(ctx, rgb, 0.95, 1.8, halo);
 }
 
 function drawStatic(ctx: CanvasRenderingContext2D, s: Scene, pal: Palette, dpr: number) {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
   ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-  const { focus: f, R } = s;
+  const k = s.intensity;
 
-  const blob = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, R * 2.9);
-  blob.addColorStop(0, pal.blob);
-  blob.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = blob;
-  ctx.fillRect(0, 0, s.w, s.h);
-  const warm = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, R * 1.15);
-  warm.addColorStop(0, pal.blobAmber);
-  warm.addColorStop(1, 'rgba(0, 0, 0, 0)');
-  ctx.fillStyle = warm;
-  ctx.fillRect(0, 0, s.w, s.h);
+  for (const sh of s.shields) {
+    const f = sh.focus;
+    const blob = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, sh.R * 2.9);
+    blob.addColorStop(0, pal.blob);
+    blob.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = blob;
+    ctx.fillRect(0, 0, s.w, s.h);
+    const warm = ctx.createRadialGradient(f.x, f.y, 0, f.x, f.y, sh.R * 1.15);
+    warm.addColorStop(0, pal.blobAmber);
+    warm.addColorStop(1, 'rgba(0, 0, 0, 0)');
+    ctx.fillStyle = warm;
+    ctx.fillRect(0, 0, s.w, s.h);
+  }
 
   ctx.globalCompositeOperation = pal.blend;
 
   for (const b of s.bokeh) {
     const g = ctx.createRadialGradient(b.p.x, b.p.y, 0, b.p.x, b.p.y, b.r);
     const rgb = b.amber ? pal.amber : pal.line;
-    g.addColorStop(0, `rgba(${rgb}, ${b.a})`);
-    g.addColorStop(0.7, `rgba(${rgb}, ${(b.a * 0.6).toFixed(3)})`);
+    g.addColorStop(0, `rgba(${rgb}, ${(b.a * k).toFixed(3)})`);
+    g.addColorStop(0.7, `rgba(${rgb}, ${(b.a * 0.6 * k).toFixed(3)})`);
     g.addColorStop(1, `rgba(${rgb}, 0)`);
     ctx.fillStyle = g;
     ctx.beginPath();
@@ -310,80 +378,70 @@ function drawStatic(ctx: CanvasRenderingContext2D, s: Scene, pal: Palette, dpr: 
   }
 
   for (const d of s.dust) {
-    ctx.fillStyle = `rgba(${d.amber ? pal.amber : pal.node}, ${d.a})`;
+    ctx.fillStyle = `rgba(${d.amber ? pal.amber : pal.node}, ${(d.a * k).toFixed(3)})`;
     ctx.beginPath();
     ctx.arc(d.p.x, d.p.y, d.r, 0, Math.PI * 2);
     ctx.fill();
   }
 
   ctx.lineWidth = 0.6;
-  for (const [a, b, k] of s.fieldEdges) {
-    ctx.strokeStyle = `rgba(${pal.line}, ${(k * 0.34).toFixed(3)})`;
+  for (const [a, b, q] of s.fieldEdges) {
+    ctx.strokeStyle = `rgba(${pal.line}, ${(q * 0.34 * k).toFixed(3)})`;
     ctx.beginPath();
     ctx.moveTo(a.x, a.y);
     ctx.lineTo(b.x, b.y);
     ctx.stroke();
   }
+  ctx.fillStyle = `rgba(${pal.node}, ${(0.55 * k).toFixed(3)})`;
   for (const p of s.field) {
-    ctx.fillStyle = `rgba(${pal.node}, 0.55)`;
     ctx.beginPath();
     ctx.arc(p.x, p.y, 1.3, 0, Math.PI * 2);
     ctx.fill();
   }
 
-  if (pal.glow) {
-    ctx.shadowColor = pal.glow;
-    ctx.shadowBlur = 7;
-  }
-  ctx.lineWidth = 1.1;
   for (const t of s.traces) {
-    ctx.strokeStyle = `rgba(${t.amber ? pal.amber : pal.line}, 0.5)`;
-    pathPoly(ctx, t.pts);
-    ctx.stroke();
+    const rgb = t.amber ? pal.amber : pal.line;
+    poly(ctx, t.pts);
+    glowStroke(ctx, rgb, 0.5 * k, 1.1, pal.halo);
     const end = t.pts[t.pts.length - 1];
     ctx.beginPath();
     ctx.arc(end.x, end.y, 2.6, 0, Math.PI * 2);
-    ctx.stroke();
+    glowStroke(ctx, rgb, 0.6 * k, 1.1, pal.halo);
   }
 
-  ctx.lineWidth = 0.75;
-  ctx.strokeStyle = `rgba(${pal.line}, 0.42)`;
-  for (const [a, b] of s.mesh) {
+  for (const sh of s.shields) {
+    ctx.lineWidth = 0.75;
+    ctx.strokeStyle = `rgba(${pal.line}, ${(0.42 * k).toFixed(3)})`;
     ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.lineTo(b.x, b.y);
+    for (const [a, b] of sh.mesh) {
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+    }
     ctx.stroke();
+    poly(ctx, sh.outline, true);
+    glowStroke(ctx, pal.line, 0.95 * k, 1.9, pal.halo * 1.3);
+    poly(ctx, scaleAbout(sh.outline, sh.focus, 1.07), true);
+    glowStroke(ctx, pal.line, 0.35 * k, 1, pal.halo);
+    if (sh.keyhole) drawKeyhole(ctx, sh.focus, sh.R, pal.node, pal.halo);
   }
-
-  if (pal.glow) ctx.shadowBlur = 18;
-  ctx.lineWidth = 1.9;
-  ctx.strokeStyle = `rgba(${pal.line}, 0.95)`;
-  pathPoly(ctx, s.outline, true);
-  ctx.stroke();
-  ctx.lineWidth = 1;
-  ctx.strokeStyle = `rgba(${pal.line}, 0.35)`;
-  pathPoly(ctx, scaleAbout(s.outline, f, 1.07), true);
-  ctx.stroke();
 
   for (const px of s.pixels) {
-    ctx.fillStyle = `rgba(${px.amber ? pal.amber : pal.node}, ${px.a.toFixed(3)})`;
+    ctx.fillStyle = `rgba(${px.amber ? pal.amber : pal.node}, ${(px.a * k).toFixed(3)})`;
     ctx.fillRect(px.p.x - px.s / 2, px.p.y - px.s / 2, px.s, px.s);
   }
 
-  if (pal.glow) ctx.shadowBlur = 10;
-  for (const l of s.locks) drawLock(ctx, l.p, l.s, l.amber ? pal.amber : pal.node);
-  if (pal.glow) ctx.shadowBlur = 16;
-  drawKeyhole(ctx, f, R, pal.node);
+  for (const l of s.locks) drawLock(ctx, l.p, l.s, l.amber ? pal.amber : pal.node, k, pal.halo);
 
-  if (pal.glow) ctx.shadowBlur = 8;
-  for (const n of s.meshNodes) {
-    ctx.fillStyle = `rgba(${n.amber ? pal.amber : pal.node}, 0.92)`;
-    ctx.beginPath();
-    ctx.arc(n.p.x, n.p.y, n.amber ? 2.2 : 1.6, 0, Math.PI * 2);
-    ctx.fill();
+  for (const sh of s.shields) {
+    for (const n of sh.nodes) {
+      if (pal.halo) stamp(ctx, n.amber ? pal.amber : pal.line, n.p, n.amber ? 22 : 16);
+      ctx.fillStyle = `rgba(${n.amber ? pal.amber : pal.node}, ${(0.92 * k).toFixed(3)})`;
+      ctx.beginPath();
+      ctx.arc(n.p.x, n.p.y, n.amber ? 2.2 : 1.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
   }
 
-  ctx.shadowBlur = 0;
   ctx.globalCompositeOperation = 'source-over';
 }
 
@@ -411,42 +469,37 @@ function drawFx(ctx: CanvasRenderingContext2D, s: Scene, pal: Palette, dpr: numb
     if (q > 0.82) continue;
     const head = pointAt(t, q / 0.82);
     const tail = pointAt(t, Math.max(0, q / 0.82 - 0.12));
-    const colour = t.amber ? pal.amber : pal.node;
+    const rgb = t.amber ? pal.amber : pal.node;
     const grad = ctx.createLinearGradient(tail.x, tail.y, head.x, head.y);
-    grad.addColorStop(0, `rgba(${colour}, 0)`);
-    grad.addColorStop(1, `rgba(${colour}, 0.9)`);
+    grad.addColorStop(0, `rgba(${rgb}, 0)`);
+    grad.addColorStop(1, `rgba(${rgb}, 0.9)`);
     ctx.strokeStyle = grad;
     ctx.lineWidth = 2;
     ctx.beginPath();
     ctx.moveTo(tail.x, tail.y);
     ctx.lineTo(head.x, head.y);
     ctx.stroke();
-    if (pal.glow) {
-      ctx.shadowColor = t.amber ? `rgba(${pal.amber}, 0.9)` : pal.glow;
-      ctx.shadowBlur = 12;
-    }
-    ctx.fillStyle = `rgba(${colour}, 1)`;
+    if (pal.halo) stamp(ctx, t.amber ? pal.amber : pal.line, head, 26);
+    ctx.fillStyle = `rgba(${rgb}, 1)`;
     ctx.beginPath();
     ctx.arc(head.x, head.y, 2.2, 0, Math.PI * 2);
     ctx.fill();
-    ctx.shadowBlur = 0;
   }
 
   // A shield-shaped scan ring leaves the outline every few seconds.
   const k = (sec % 7) / 7;
   if (k < 0.62) {
-    const ring = scaleAbout(s.outline, s.focus, 1.04 + k * 0.95);
-    ctx.lineWidth = 1.4;
-    ctx.strokeStyle = `rgba(${pal.line}, ${(0.42 * (1 - k / 0.62)).toFixed(3)})`;
-    pathPoly(ctx, ring, true);
-    ctx.stroke();
+    for (const sh of s.shields) {
+      poly(ctx, scaleAbout(sh.outline, sh.focus, 1.04 + k * 0.95), true);
+      glowStroke(ctx, pal.line, 0.42 * (1 - k / 0.62), 1.4, pal.halo * 0.6);
+    }
   }
   ctx.globalCompositeOperation = 'source-over';
 }
 
-/** Mounts the art inside a host element with data-art="hero" or data-art="page". */
+/** Mounts the art inside a host element with data-art set to hero, page or ambient. */
 export function mountArt(host: HTMLElement) {
-  const variant: Variant = host.dataset.art === 'page' ? 'page' : 'hero';
+  const variant: Variant = host.dataset.art === 'page' ? 'page' : host.dataset.art === 'ambient' ? 'ambient' : 'hero';
   const base = document.createElement('canvas');
   const fx = document.createElement('canvas');
   host.append(base, fx);
@@ -456,23 +509,24 @@ export function mountArt(host: HTMLElement) {
 
   const root = document.documentElement;
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const animated = !reduced && variant !== 'ambient';
   const theme = (): Theme => (root.dataset.theme === 'light' ? 'light' : 'dark');
   let scene: Scene | null = null;
+  let signature = '';
   let dpr = 1;
   let visible = true;
-  let raf = 0;
   let last = 0;
 
   const build = () => {
+    // The ambient layer only shows in the margins of wide screens; skip the work elsewhere.
+    if (variant === 'ambient' && window.innerWidth < 1280) {
+      host.removeAttribute('data-ready');
+      return;
+    }
     const box = host.getBoundingClientRect();
     const w = Math.round(box.width);
     const h = Math.round(box.height);
     if (!w || !h) return;
-    dpr = Math.min(2, window.devicePixelRatio || 1);
-    for (const c of [base, fx]) {
-      c.width = Math.round(w * dpr);
-      c.height = Math.round(h * dpr);
-    }
     let focus: Pt = { x: w * 0.84, y: h * 0.5 };
     let R = h * 0.42;
     if (variant === 'hero') {
@@ -483,13 +537,23 @@ export function mountArt(host: HTMLElement) {
         R = Math.min(p.height * 0.64, h * 0.52);
       }
     }
+    const nextDpr = Math.min(2, window.devicePixelRatio || 1);
+    const sig = [w, h, Math.round(focus.x), Math.round(focus.y), Math.round(R), nextDpr].join(',');
+    if (sig === signature) return;
+    signature = sig;
+    dpr = nextDpr;
+    for (const c of [base, fx]) {
+      c.width = Math.round(w * dpr);
+      c.height = Math.round(h * dpr);
+    }
     scene = buildScene(variant, w, h, focus, R);
     drawStatic(bctx, scene, PALETTES[theme()], dpr);
-    if (reduced) drawFx(fctx, scene, PALETTES[theme()], dpr, 2400);
+    if (reduced && variant !== 'ambient') drawFx(fctx, scene, PALETTES[theme()], dpr, 2400);
+    host.setAttribute('data-ready', '');
   };
 
   const loop = (now: number) => {
-    raf = requestAnimationFrame(loop);
+    requestAnimationFrame(loop);
     if (!scene || !visible || document.hidden || now - last < 33) return;
     last = now;
     drawFx(fctx, scene, PALETTES[theme()], dpr, now);
@@ -499,7 +563,7 @@ export function mountArt(host: HTMLElement) {
   new ResizeObserver(() => {
     window.clearTimeout(timer);
     timer = window.setTimeout(build, 120);
-  }).observe(host);
+  }).observe(variant === 'ambient' ? root : host);
   new MutationObserver(() => scene && drawStatic(bctx, scene, PALETTES[theme()], dpr)).observe(root, {
     attributes: true,
     attributeFilter: ['data-theme'],
@@ -507,9 +571,7 @@ export function mountArt(host: HTMLElement) {
   new IntersectionObserver(([entry]) => (visible = entry.isIntersecting)).observe(host);
 
   build();
-  // Web fonts can move the evidence panel once they load; redraw against the final layout.
+  // Web fonts can move the evidence panel once they load; rebuild only if the layout changed.
   document.fonts?.ready.then(build, () => undefined);
-  host.setAttribute('data-ready', '');
-  if (!reduced) raf = requestAnimationFrame(loop);
-  return () => cancelAnimationFrame(raf);
+  if (animated) requestAnimationFrame(loop);
 }

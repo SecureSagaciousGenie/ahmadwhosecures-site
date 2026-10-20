@@ -425,11 +425,11 @@ function initCopy() {
   }
 }
 
+initArt();
 initHeader();
 initTheme();
 initMorph();
 initTrail();
-initArt();
 initLab();
 initSim();
 initPalette();

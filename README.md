@@ -15,7 +15,7 @@ Source for [ahmadwhosecures.is-a.dev](https://ahmadwhosecures.is-a.dev): case st
 | `src/components/` | Header, footer, ledger, evidence trail, lab backdrop and ticker, sign-in panel, search and the rest |
 | `src/lib/signin.ts` | The example Conditional Access policy set and its evaluation |
 | `src/scripts/app.ts` | The client script: progressive enhancement, see below |
-| `src/scripts/art.ts` | Generated background art for the hero and page heads |
+| `src/scripts/art.ts` | Generated background art: the home hero, every page head and a faint layer in the screen margins |
 | `src/styles/global.css` | All styling and design tokens, dark and light |
 | `public/_headers` | Security headers for Cloudflare Pages |
 | `public/.well-known/security.txt` | Security contact (RFC 9116); renew `Expires` before April 2027 |
