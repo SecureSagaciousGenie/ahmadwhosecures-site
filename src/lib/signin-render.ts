@@ -25,17 +25,17 @@ const badge = (h: Hit) => {
 };
 
 export function summarise(r: Result): string {
-  if (r.verdict === 'blocked') return `Blocked by ${r.blockers.map((b) => b.id).join(' and ')}.`;
+  if (r.verdict === 'blocked') return `Blocked by policy: ${r.blockers.map((b) => b.name).join(' and ')}.`;
   return r.requires.length ? `Signed in. Requires ${r.requires.join(', ')}.` : 'Signed in.';
 }
 
 export function renderResult(r: Result): string {
   const blocked = r.verdict === 'blocked';
   const first = r.blockers[0];
-  const more = r.blockers.length > 1 ? `, plus ${r.blockers.slice(1).map((b) => esc(b.id)).join(' and ')}` : '';
+  const more = r.blockers.length > 1 ? `, plus ${r.blockers.length - 1} more` : '';
 
   const sub = blocked
-    ? `<p class="sv-sub">by <b>${esc(first.id)}</b> ${esc(first.name)}${more}</p>`
+    ? `<p class="sv-sub">by policy <b>${esc(first.name)}</b>${more}</p>`
     : `<p class="sv-sub">${r.requires.length ? 'once these controls are satisfied:' : 'with no extra controls.'}</p>` +
       (r.requires.length ? `<ul class="sv-reqs">${r.requires.map((c) => `<li>${esc(c)}</li>`).join('')}</ul>` : '');
 
@@ -63,16 +63,15 @@ export function renderResult(r: Result): string {
       .map(
         (h, n) =>
           `<li class="st" data-outcome="${h.outcome}" data-enforced="${h.enforced}" style="--n:${n}">` +
-          `<span class="st-id">${esc(h.id)}</span>` +
-          `<div><p class="st-head"><span class="st-name">${esc(h.name)}</span><span class="st-badge">${badge(h)}</span></p>` +
-          `<p class="st-why">${esc(h.why)}</p></div></li>`,
+          `<p class="st-head"><span class="st-name">${esc(h.name)}</span><span class="st-badge">${badge(h)}</span></p>` +
+          `<p class="st-why">${esc(h.why)}</p></li>`,
       )
       .join('') +
     `</ol>`;
 
   const skipped =
     `<details class="sim-skip"><summary>Did not apply: ${r.skipped.length}</summary><ul>` +
-    r.skipped.map((s) => `<li><b>${esc(s.id)}</b><span>${esc(s.name)} <em>(${esc(s.why)})</em></span></li>`).join('') +
+    r.skipped.map((s) => `<li>${esc(s.name)} <em>(${esc(s.why)})</em></li>`).join('') +
     `</ul></details>`;
 
   return verdict + gates + notes + trace + skipped;

@@ -41,7 +41,7 @@ Animation and autoplay stop when the visitor's system asks for reduced motion. P
 
 | Element: | Choice: |
 |---|---|
-| Colour | Navy ink and signal amber; status colours follow assessment usage: green implemented or shipped, blue in progress, red blocked |
+| Colour | Navy ink and signal amber; green marks shipped or granted, red marks blocked |
 | Type | Hubot Sans (display, expanded width), IBM Plex Sans (text), JetBrains Mono (labels and code) |
 | Theme | Dark by default; a full light theme behind the switch |
 | Code | Shiki with `github-light` and `github-dark-default`, chosen by the page theme |
@@ -62,11 +62,11 @@ npm run preview:headers   # serves dist/ with the headers from public/_headers
 
 ## Adding content
 
-A new case study is a Markdown file in `src/content/work/` with the frontmatter fields used by the existing files. `status` is `Implemented`, `In progress` or `Shipped`. `order` sets its position in the ledger and its CF number.
+A new case study is a Markdown file in `src/content/work/` with the frontmatter fields used by the existing files. `kind` labels the work. Client work leaves out `status`, `statusNote` and `period`, so no case describes what an employer has or has not finished; only public work such as an open-source tool sets `status: Shipped`. `order` sets its position in the ledger and its CF number.
 
 A new article is a Markdown file in `src/content/writing/`. Set `draft: true` to keep it out of the build.
 
-Before publishing anything about client work: describe the employer by industry, keep identifiers out (tenant and app IDs, addresses, hostnames, account and group names, vendor-to-system maps) and use lab data for DFIR material. The sign-in panel uses an example policy set for the same reason.
+Before publishing anything about client work: describe the employer by industry, keep identifiers out (tenant and app IDs, policy names and numbers, addresses, hostnames, account and group names, headcounts, mailbox counts, dates, vendor-to-system maps and project status) and use lab data for DFIR material. The sign-in panel uses textbook policies modelled on Microsoft's published common Conditional Access policies for the same reason.
 
 ## Deploy: Cloudflare Pages
 

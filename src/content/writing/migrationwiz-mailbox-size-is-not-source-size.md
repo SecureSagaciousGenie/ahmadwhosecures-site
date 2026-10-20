@@ -10,7 +10,7 @@ topics:
   - MigrationWiz
 ---
 
-During a Google Workspace to MS 365 migration, MigrationWiz showed two shared mailboxes at 1.67 and 1.82 times the size Google reported for them. The numbers were not wrong. They answered a different question from the one I was asking.
+During a Google Workspace to MS 365 migration, MigrationWiz showed some shared mailboxes at close to twice the size Google reported for them. The numbers were not wrong. They answered a different question from the one I was asking.
 
 ## What the field measures
 
@@ -27,15 +27,13 @@ Gmail has labels. Exchange has folders. A Gmail message can carry several labels
 
 ## Measuring it
 
-The multiplier is the MigrationWiz forecast divided by the size Google reports for the same mailbox. I measured it on a sample before committing to a cutover plan.
+The multiplier is the MigrationWiz forecast divided by the size Google reports for the same mailbox. Measure it on a sample before committing to a cutover plan. The pattern I saw looked like this, rounded:
 
 | Mailbox: | Type: | Multiplier: |
 |---|---|---|
-| Procurement team inbox | Shared | 1.03 |
-| User A | User | 1.00 |
-| User B | User | 1.01 |
-| Bids team inbox 1 | Shared | 1.67 |
-| Bids team inbox 2 | Shared | 1.82 |
+| Personal mailbox | User | about 1.0 |
+| Shared inbox with one main user | Shared | about 1.0 |
+| Team inbox labelled by several people | Shared | 1.6 to 1.9 |
 
 *Personal mailboxes sit near 1.0. Shared mailboxes where several people apply their own labels to the same messages carry the multiplier.*
 

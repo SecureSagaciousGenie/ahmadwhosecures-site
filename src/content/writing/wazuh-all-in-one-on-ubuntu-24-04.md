@@ -1,6 +1,6 @@
 ---
 title: "Wazuh all-in-one on Ubuntu 24.04: the decisions that matter"
-description: A condensed build guide for a single-node Wazuh SIEM covering about 80 Windows endpoints, from memory sizing and disk layout to agent rollout through RMM and the first custom rules.
+description: A condensed build guide for a single-node Wazuh SIEM covering a fleet of under 100 Windows endpoints, from memory sizing and disk layout to agent rollout through RMM and the first custom rules.
 date: 2026-10-12
 order: 3
 topics:
@@ -10,7 +10,7 @@ topics:
   - Sysmon
 ---
 
-This is the short version of a 19-section build manual and an OS companion I wrote for a single-node Wazuh deployment covering about 80 Windows endpoints. It keeps the decisions and drops the screenshots. Addresses and names are examples.
+This is the short version of a build manual and an OS companion I wrote for a single-node Wazuh deployment covering under 100 Windows endpoints. It keeps the decisions and drops the screenshots. Addresses and names are examples.
 
 <figure>
   <img src="/diagrams/wazuh-single-node-flow.svg" alt="RMM pushes Sysmon and the agent to endpoints, agents send events to the manager, the manager sends alerts to the indexer, the dashboard reads the indexer." width="680" height="330" loading="lazy" />
@@ -19,7 +19,7 @@ This is the short version of a 19-section build manual and an OS companion I wro
 
 ## Single node or distributed
 
-Wazuh's quickstart sizes an all-in-one host for 51 to 100 agents at 8 vCPU, 8 GiB of RAM and 200 GB of storage for 90 days of alerts. At this size a single node is the right call. A distributed cluster doubles the maintenance for a team of one, and the failure it protects against is better handled with backups and a tested rebuild.
+Wazuh's quickstart sizes an all-in-one host for 51 to 100 agents at 8 vCPU, 8 GiB of RAM and 200 GB of storage for 90 days of alerts. At this size a single node is the right call. A distributed cluster doubles the maintenance for a small team, and the failure it protects against is better handled with backups and a tested rebuild.
 
 ## Ubuntu 22.04 or 24.04
 
@@ -29,7 +29,7 @@ The first version of the manual targeted 22.04, which was the most tested platfo
 
 The indexer is a JVM process. It wants a large heap and a large page cache, and it wants them all the time. The usual guidance for OpenSearch-based indexers is a heap of about half the RAM, staying under 32 GB so compressed object pointers stay on. The other half goes to the file system cache.
 
-That shaped which server got which job. On paper the SIEM went on the smaller server and the DFIR stack on the larger one. That was the wrong way round. The DFIR stack is bursty: heavy during an investigation, close to idle otherwise. The SIEM is a constant load. The SIEM moved to the server with more memory.
+That decides which host gets which job when there are two. It is tempting to give the bigger server to the DFIR stack, and that is the wrong way round. The DFIR stack is bursty: heavy during an investigation, close to idle otherwise. The SIEM is a constant load, so it goes on the host with more memory.
 
 ## Disk layout
 

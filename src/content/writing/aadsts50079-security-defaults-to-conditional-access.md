@@ -36,21 +36,21 @@ Five policies replaced Security Defaults. Each does one job, so a sign-in log en
 
 | Policy: | Applies to: | Control: |
 |---|---|---|
-| CA01 Require MFA | All users | Grant: require MFA |
-| CA02 Require MFA for admin roles | Privileged directory roles | Grant: require MFA |
-| CA03 Block legacy authentication | All users, all cloud apps, legacy client apps | Block |
-| CA04 Block device code flow | All users, device code authentication flow | Block |
-| CA05 Require MFA for admin portals | All users, MS admin portals | Grant: require MFA |
+| Require MFA | All users | Grant: require MFA |
+| Require MFA for admin roles | Privileged directory roles | Grant: require MFA |
+| Block legacy authentication | All users, all cloud apps, legacy client apps | Block |
+| Block device code flow | All users, device code authentication flow | Block |
+| Require MFA for admin portals | All users, MS admin portals | Grant: require MFA |
 
 *Five narrow policies cover what Security Defaults covered, plus device code flow, and each can be excluded or tightened on its own.*
 
-CA02 and CA05 overlap with CA01 on purpose. When the tenant later moves to tiered access and CA01 is split by group, admin roles and admin portals keep their own MFA requirement and do not depend on the split being right.
+The admin-role and admin-portal policies overlap with the all-users policy on purpose. When the tenant later moves to tiered access and the all-users policy is split by group, admin roles and admin portals keep their own MFA requirement and do not depend on the split being right.
 
 ## Break-glass and exclusion groups
 
 Two cloud-only break-glass accounts sit on the tenant's onmicrosoft.com domain, excluded from every policy through one group. MS now enforces MFA on its admin portals for every account, so the break-glass accounts have MFA registered and their credentials are held offline.
 
-Exclusions go through groups named for their purpose, never through individual users on a policy. One group covers break-glass. One covers accounts that cannot do MFA or modern authentication, which held the migration account then and will hold a legacy line-of-business service account later. One covers device code flow. A reviewer can read the intent from the group name, and an assessor can see exactly who is outside each control.
+Exclusions go through groups named for their purpose, never through individual users on a policy: one for break-glass, one for accounts that cannot do MFA or modern authentication, such as a migration account, and one for each other exception, such as device code flow. A reviewer can read the intent from the group name, and an assessor can see exactly who is outside each control.
 
 ## Order of operations
 

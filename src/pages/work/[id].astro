@@ -33,9 +33,9 @@ const caseId = `CF-${String(index).padStart(2, '0')}`;
       <h1>{entry.data.title}</h1>
       <p class="lede">{entry.data.claim}</p>
       <div class="meta-row">
-        <Status status={entry.data.status} />
+        {entry.data.status ? <Status status={entry.data.status} /> : <span class="kind">{entry.data.kind}</span>}
         <span>{entry.data.setting}</span>
-        <span>{entry.data.period}</span>
+        {entry.data.period && <span>{entry.data.period}</span>}
       </div>
     </header>
 
@@ -44,14 +44,18 @@ const caseId = `CF-${String(index).padStart(2, '0')}`;
         <section class="rail-card">
           <h2>{caseId} summary</h2>
           <dl class="rail-dl">
-            <div>
-              <dt>Status</dt>
-              <dd>
-                <Status status={entry.data.status} />
-                <p class="status-note">{entry.data.statusNote}</p>
-              </dd>
-            </div>
-            <div><dt>Evidence</dt><dd>{entry.data.evidence}</dd></div>
+            {
+              entry.data.status && (
+                <div>
+                  <dt>Status</dt>
+                  <dd>
+                    <Status status={entry.data.status} />
+                    {entry.data.statusNote && <p class="status-note">{entry.data.statusNote}</p>}
+                  </dd>
+                </div>
+              )
+            }
+            <div><dt>In short</dt><dd>{entry.data.evidence}</dd></div>
             <div>
               <dt>Frameworks and tools</dt>
               <dd>

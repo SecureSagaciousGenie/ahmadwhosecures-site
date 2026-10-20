@@ -35,7 +35,7 @@ const first = evaluate(defaultScenario);
       ))
     }
     <fieldset class="sim-group sim-mode">
-      <legend>Policies CA06 to CA10</legend>
+      <legend>Location and device policies</legend>
       <div class="seg">
         {
           options.mode.map(([value, label]) => (
@@ -52,8 +52,8 @@ const first = evaluate(defaultScenario);
     </fieldset>
     <noscript>
       <p class="sim-nojs">
-        Changing the scenario needs JavaScript. Without it, this panel shows one example: finance staff signing in away
-        from the office on a company laptop.
+        Changing the scenario needs JavaScript. Without it, this panel shows one example: a staff member signing in from
+        an unexpected country on a company laptop.
       </p>
     </noscript>
   </div>
@@ -61,6 +61,7 @@ const first = evaluate(defaultScenario);
   <p class="sr-only" aria-live="polite" data-sim-live>{summarise(first)}</p>
 </div>
 <p class="sim-foot">
-  An example policy set built the way I build them, not any client's configuration. Entra ID evaluates every policy that
-  applies to a sign-in; a block from any one of them wins, and the grant controls of the rest add up.
+  The policies follow Microsoft's published common Conditional Access policies; they are not any organisation's
+  configuration. Entra ID evaluates every policy that applies to a sign-in; a block from any one of them wins, and the
+  grant controls of the rest add up.
 </p>

@@ -18,26 +18,24 @@ const writing = (await getCollection('writing', ({ data }) => !data.draft)).sort
 
 const facts = [
   {
-    label: 'Staff in scope',
-    prefix: 'about',
-    value: '80',
-    note: 'As the first and only security hire, since November 2025.',
+    label: 'Frameworks, one evidence trail',
+    value: '4',
+    note: 'CMMC, NIST SP 800-171, DFARS 252.204-7012 and ISO/IEC 27001:2022.',
   },
   {
-    label: 'Mail migrated',
-    prefix: 'about',
-    value: '1.8 TB',
-    note: '78 user and 17 shared mailboxes, Google Workspace to MS 365.',
-  },
-  {
-    label: 'Baseline sign-in policies',
-    value: '5',
-    note: 'Replaced Security Defaults mid-migration without weakening the tenant.',
+    label: 'NIST SP 800-171 requirements',
+    value: '110',
+    note: 'Each one traced from SSP statement to policy, implementation and evidence.',
   },
   {
     label: 'Reversible fixes',
     value: '27',
-    note: 'In Win11-Security-Optimizer v1.2.0, covered by 216 Pester tests.',
+    note: 'In Win11-Security-Optimizer v1.2.0, my open-source hardening tool.',
+  },
+  {
+    label: 'Pester tests in CI',
+    value: '216',
+    note: 'Run on Windows PowerShell 5.1, plus integration on a real Windows runner.',
   },
 ];
 ---
@@ -52,9 +50,9 @@ const facts = [
           I build security programs for US defense contractors and keep the evidence an assessor will ask to see.
         </p>
         <p class="hero-body">
-          I am the first and only security engineer at a defense contractor of about 80 staff. I cover CMMC, NIST SP
-          800-171 and ISO 27001, run detection and response, and own the identity and mail migrations underneath them.
-          Earlier roles were in SOC operations, DevOps and carrier network engineering.
+          I lead security engineering at a US defense contractor. I cover CMMC, NIST SP 800-171 and ISO 27001, run
+          detection and response, and own the identity and mail migrations underneath them. Earlier roles were in SOC
+          operations, DevOps and carrier network engineering.
         </p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="/work/">Open the case files<Icon name="arrow" /></a>
@@ -93,9 +91,9 @@ const facts = [
     <div class="container">
       <SectionHead id="cases-title" eyebrow="Ledger" title="Case files" link={{ href: '/work/', label: 'All case files' }}>
         <p>
-          Each case covers the setting, the decisions and their trade-offs, and where the work stands. Status uses
-          assessment language: implemented means in place with evidence; in progress means designed, with the build under
-          way.
+          Each case covers the problem, the decisions and their trade-offs, and the parts that carry over to other
+          environments. Client detail is generalised: no names, counts, dates or configuration that would map an
+          environment.
         </p>
       </SectionHead>
       <CaseLedger items={work} />
@@ -106,7 +104,7 @@ const facts = [
     <div class="container">
       <SectionHead id="sim-title" eyebrow="Interactive" title="How a sign-in gets decided">
         <p>
-          Pick who is signing in, from where, on what and to what. The panel runs an example Conditional Access policy set
+          Pick who is signing in, from where, on what and to what. The panel runs a textbook Conditional Access policy set
           and shows which policies applied, which one decided, and why.
         </p>
       </SectionHead>

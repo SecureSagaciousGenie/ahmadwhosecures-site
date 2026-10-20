@@ -1,69 +1,57 @@
 ---
 // Author: Ahmad Shaukat
-// Hero panel: one requirement traced to the control, the build and the evidence an assessor opens.
+// Hero panel: how one requirement is traced to a control, a typical build and the evidence an
+// assessor opens. It shows the method only: builds are generic patterns, not any client environment.
 // The picker is a radio group, so it works without JavaScript; the script only adds autoplay.
 const items = [
   {
     id: '3.5.3',
     title: 'Multifactor authentication',
     cmmc: 'IA.L2-3.5.3',
-    control:
-      'Every account signs in with MFA. Admin roles and admin portals have their own policies, so splitting the main policy later cannot weaken them.',
+    control: 'Every account signs in with MFA, and admin access needs a method that cannot be phished.',
     build:
-      'Entra ID Conditional Access: CA01 for all users, CA02 for admin roles, CA05 for admin portals. CA03 blocks legacy protocols that cannot do MFA.',
-    files: ['ca-policy-export.json', 'report-only-results.csv', 'signin-log-sample.csv'],
-    scope: 'Commercial tenant',
-    status: 'implemented',
-    label: 'Implemented',
+      'Conditional Access: MFA for all users, a phishing-resistant method for admin roles and admin portals, and legacy authentication blocked.',
+    files: ['policy-export.json', 'report-only-results.csv', 'signin-log-sample.csv'],
+    check: 'Checked for every account type, admins included',
   },
   {
     id: '3.1.1',
     title: 'Authorized access',
     cmmc: 'AC.L2-3.1.1',
-    control: 'Named accounts only, with access set by role, location and device rather than by a password alone.',
+    control: 'Only named accounts get in, and access depends on role and device as well as the password.',
     build:
-      'Unique Entra ID accounts, a break-glass pair excluded through one purpose-named group, and access tiers by role, location and device.',
-    files: ['account-review.xlsx', 'exclusion-groups.csv', 'access-tiers.md'],
-    scope: 'Tiers moving from report-only to enforced',
-    status: 'in-progress',
-    label: 'In progress',
+      'Unique named identities, break-glass accounts excluded through one documented group, and access rules by role and device.',
+    files: ['account-review.xlsx', 'exclusion-groups.csv', 'access-rules.md'],
+    check: 'Checked against the HR list and every exclusion',
   },
   {
     id: '3.3.1',
     title: 'System audit logs',
     cmmc: 'AU.L2-3.3.1',
-    control: 'Logs that show who did what, kept for a retention period written into the SSP.',
+    control: 'Logs that show who did what, kept for a retention period the SSP states.',
     build:
-      'Wazuh on servers the business already owned, Sysmon on every Windows endpoint, five event channels and an index lifecycle policy sized for retention.',
-    files: ['agent-coverage.csv', 'index-lifecycle-policy.json', 'ssp-au-3.3.1.docx'],
-    scope: 'Production build under way',
-    status: 'in-progress',
-    label: 'In progress',
+      'A SIEM fed by endpoint telemetry such as Sysmon and the core Windows event channels, with retention sized to the SSP.',
+    files: ['agent-coverage.csv', 'retention-policy.json', 'ssp-statement.docx'],
+    check: 'Checked from an alert back to the raw event',
   },
   {
     id: '3.6.1',
     title: 'Incident handling',
     cmmc: 'IR.L2-3.6.1',
-    control:
-      'A way to run an incident from first alert to closed case, with preparation, analysis, containment and recovery written down.',
+    control: 'A tested way to run an incident from first alert to closed case.',
     build:
-      'TheHive, Cortex and MISP for case handling. KAPE and THOR Lite triage, practised against known plants on a lab machine.',
-    files: ['ir-runbook.pdf', 'case-template.json', 'lab-exercise-hashes.txt'],
-    scope: 'Workflow in use on lab data',
-    status: 'in-progress',
-    label: 'In progress',
+      'Case management, a written triage runbook, and evidence collection practised against known plants on a lab machine.',
+    files: ['ir-runbook.pdf', 'case-template.json', 'exercise-record.txt'],
+    check: 'Checked by walking a test incident end to end',
   },
   {
     id: '3.13.11',
     title: 'FIPS-validated cryptography',
     cmmc: 'SC.L2-3.13.11',
-    control: 'Cryptography protecting CUI uses validated modules, each one named by its certificate.',
-    build:
-      'Validated modules inside the CUI enclave. A reference sheet lists the CMVP certificate number for every module the SSP relies on.',
-    files: ['fips-reference.xlsx', 'cmvp-certificates.pdf', 'ssp-sc-3.13.11.docx'],
-    scope: 'Enclave in build',
-    status: 'in-progress',
-    label: 'In progress',
+    control: 'Cryptography that protects CUI uses validated modules, each one named by certificate.',
+    build: 'Validated modules wherever CUI is stored or sent, listed on a reference sheet with their CMVP certificate numbers.',
+    files: ['fips-reference.xlsx', 'cmvp-certificates.pdf', 'ssp-statement.docx'],
+    check: 'Checked by certificate number, not product name',
   },
 ];
 ---
@@ -109,7 +97,7 @@ const items = [
               <p class="ts-v">{it.control}</p>
             </li>
             <li class="ts" style="--i:2">
-              <span class="ts-k">Built with</span>
+              <span class="ts-k">Typical build</span>
               <p class="ts-v">{it.build}</p>
             </li>
             <li class="ts" style="--i:3">
@@ -122,10 +110,8 @@ const items = [
             </li>
           </ol>
           <div class="trail-foot">
-            <p class="trail-scope">{it.scope}</p>
-            <p class="stamp" data-status={it.status}>
-              {it.label}
-            </p>
+            <p class="trail-scope">{it.check}</p>
+            <p class="stamp">Traced</p>
           </div>
         </div>
       ))
@@ -133,6 +119,6 @@ const items = [
   </section>
   <p class="trail-note">
     The mapping reflects my reading of NIST SP 800-171 Rev 2 and the CMMC Level 2 assessment guidance; it is not legal
-    advice. File names are illustrative.
+    advice. Builds are typical patterns and file names are illustrative; neither describes a client environment.
   </p>
 </div>

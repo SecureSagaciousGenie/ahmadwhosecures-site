@@ -1,6 +1,6 @@
 ---
 // Author: Ahmad Shaukat
-// Case files as a ledger: one row per case, with its status in assessment language.
+// Case files as a ledger: one row per case. Client work shows its kind; only public work shows a status.
 import Status from './Status.astro';
 import Icon from './Icon.astro';
 import type { CollectionEntry } from 'astro:content';
@@ -29,11 +29,15 @@ const pad = (n: number) => String(n).padStart(2, '0');
             </span>
           </span>
           <span class="ledger-meta">
-            <Status status={item.data.status} />
+            {item.data.status ? <Status status={item.data.status} /> : <span class="kind">{item.data.kind}</span>}
             <span class="ledger-when">
               {item.data.setting}
-              <br />
-              {item.data.period}
+              {item.data.period && (
+                <>
+                  <br />
+                  {item.data.period}
+                </>
+              )}
             </span>
           </span>
           <span class="ledger-go" aria-hidden="true">

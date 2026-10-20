@@ -2,6 +2,7 @@
 title: Win11-Security-Optimizer
 claim: Wrote and maintain an open-source Windows 11 hardening and triage tool in which every change is backed up and reversible.
 evidence: A PowerShell 5.1 GUI with a security audit and tiered fixes, debloat, a plain-English compromise check and a native process and event-log hunt. Restore point, JSON before-state, rollback script and verify-after-apply on every change.
+kind: Open source
 status: Shipped
 statusNote: Public on GitHub under the MIT licence. Under active development.
 frameworks:

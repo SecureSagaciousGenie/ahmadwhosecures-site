@@ -2,11 +2,12 @@
 // Example Conditional Access evaluation behind the sign-in panel on the home page.
 // It follows how Entra ID combines policies: every policy that applies is evaluated,
 // a block from any of them wins, and the grant controls of the rest add up.
-// The policy set is an example built the way I build them. It is not any client's configuration.
+// The policies are textbook ones, modelled on Microsoft's published common policy templates.
+// They do not describe any organisation's configuration.
 
-export type Person = 'office' | 'finance' | 'leader' | 'exec' | 'admin';
-export type Place = 'office' | 'away';
-export type Device = 'laptop' | 'personal' | 'phone' | 'newphone';
+export type Person = 'staff' | 'admin' | 'guest';
+export type Place = 'usual' | 'unexpected';
+export type Device = 'laptop' | 'personal' | 'phone';
 export type App = 'mail' | 'files' | 'portal' | 'imap';
 export type Risk = 'none' | 'signin' | 'user';
 export type Mode = 'enforce' | 'report';
@@ -24,9 +25,8 @@ export type Gate = 'identity' | 'device' | 'place' | 'risk';
 export type GateState = 'pass' | 'step' | 'block' | 'logged';
 
 export interface Hit {
-  id: string;
   name: string;
-  stage: 'baseline' | 'tier';
+  stage: 'baseline' | 'rollout';
   enforced: boolean;
   outcome: 'block' | 'grant';
   controls: string[];
@@ -35,7 +35,6 @@ export interface Hit {
 }
 
 export interface Skip {
-  id: string;
   name: string;
   why: string;
 }
@@ -58,25 +57,22 @@ export interface Result {
 
 export const options = {
   person: [
-    ['office', 'Office staff'],
-    ['finance', 'Finance'],
-    ['leader', 'Team leader'],
-    ['exec', 'Executive'],
-    ['admin', 'IT admin'],
+    ['staff', 'Staff member'],
+    ['admin', 'Admin'],
+    ['guest', 'Guest'],
   ],
   place: [
-    ['office', 'In the office'],
-    ['away', 'Away'],
+    ['usual', 'Usual country'],
+    ['unexpected', 'Unexpected country'],
   ],
   device: [
     ['laptop', 'Company laptop'],
     ['personal', 'Personal laptop'],
-    ['phone', 'Approved phone'],
-    ['newphone', 'New phone'],
+    ['phone', 'Phone'],
   ],
   app: [
-    ['mail', 'Outlook or Teams'],
-    ['files', 'Files in a browser'],
+    ['mail', 'Email'],
+    ['files', 'Files'],
     ['portal', 'Admin portal'],
     ['imap', 'IMAP mail client'],
   ],
@@ -92,174 +88,148 @@ export const options = {
 } as const;
 
 export const defaultScenario: Scenario = {
-  person: 'finance',
-  place: 'away',
+  person: 'staff',
+  place: 'unexpected',
   device: 'laptop',
   app: 'mail',
   risk: 'none',
   mode: 'enforce',
 };
 
-export const policyNames: Record<string, string> = {
-  CA01: 'Require MFA',
-  CA02: 'Admin roles: phishing-resistant MFA',
-  CA03: 'Block legacy authentication',
-  CA04: 'Block device code flow',
-  CA05: 'Admin portals: require MFA',
-  CA06: 'Office roles: office network only',
-  CA07: 'Laptops: compliant company device',
-  CA08: 'Finance: strictest sign-in',
-  CA09: 'Phones: one approved phone, mail apps only',
-  CA10: 'Office-only roles: no phone access',
-  CA11: 'Risky sign-in: prove it again',
-  CA12: 'Risky user: secure password change',
-};
+export const policies = {
+  mfa: 'MFA for all users',
+  admins: 'Phishing-resistant MFA for admins',
+  legacy: 'Block legacy authentication',
+  deviceCode: 'Block device code flow',
+  portals: 'MFA for admin portals',
+  location: 'Block unexpected countries',
+  compliant: 'Compliant device on laptops',
+  appProtection: 'App protection on phones',
+  signinRisk: 'Risky sign-in: MFA every time',
+  userRisk: 'Risky user: secure password change',
+} as const;
 
-const PHONE_ROLES: Person[] = ['leader', 'exec', 'admin'];
-const OFFICE_ROLES: Person[] = ['office', 'finance'];
 const CONTROL_ORDER = [
   'MFA',
   'Phishing-resistant MFA',
-  'Compliant company device',
+  'Compliant device',
   'App protection policy',
   'Secure password change',
-  'Sign-in every hour',
   'Sign-in every time',
-  'Monitored browser session',
 ];
 
-const isPhone = (d: Device) => d === 'phone' || d === 'newphone';
-const isLaptop = (d: Device) => d === 'laptop' || d === 'personal';
+const quoted = (names: string[]) => {
+  const q = names.map((n) => `"${n}"`);
+  return q.length < 2 ? q.join('') : `${q.slice(0, -1).join(', ')} and ${q[q.length - 1]}`;
+};
 
 export function evaluate(s: Scenario): Result {
   const hits: Hit[] = [];
   const skipped: Skip[] = [];
-  const tierOn = s.mode === 'enforce';
+  const rolloutOn = s.mode === 'enforce';
 
   const hit = (
-    id: string,
+    name: string,
     stage: Hit['stage'],
     outcome: Hit['outcome'],
     gate: Gate,
     why: string,
     controls: string[] = [],
-  ) => hits.push({ id, name: policyNames[id], stage, enforced: stage === 'baseline' || tierOn, outcome, controls, why, gate });
-  const skip = (id: string, why: string) => skipped.push({ id, name: policyNames[id], why });
+  ) => hits.push({ name, stage, enforced: stage === 'baseline' || rolloutOn, outcome, controls, why, gate });
+  const skip = (name: string, why: string) => skipped.push({ name, why });
+
+  const member = s.person !== 'guest';
+  const laptop = s.device === 'laptop' || s.device === 'personal';
 
   // Baseline: always enforced.
-  hit('CA01', 'baseline', 'grant', 'identity', 'Everyone proves it is them with a second factor.', ['MFA']);
+  hit(policies.mfa, 'baseline', 'grant', 'identity', 'Every account proves it is the person with a second factor.', ['MFA']);
 
   if (s.person === 'admin') {
     hit(
-      'CA02',
+      policies.admins,
       'baseline',
       'grant',
       'identity',
-      'Admin accounts sign in with a passkey or security key, never a code that can be phished.',
+      'Admin accounts use a passkey or security key, never a code that can be phished.',
       ['Phishing-resistant MFA'],
     );
-  } else skip('CA02', 'No admin role');
+  } else skip(policies.admins, 'Not an admin account');
 
   if (s.app === 'imap') {
-    hit('CA03', 'baseline', 'block', 'identity', 'IMAP, POP and basic SMTP cannot do MFA, so they are blocked for everyone.');
-  } else skip('CA03', 'Modern client');
+    hit(policies.legacy, 'baseline', 'block', 'identity', 'IMAP, POP and basic SMTP cannot do MFA, so they are blocked for everyone.');
+  } else skip(policies.legacy, 'Modern sign-in');
 
-  skip('CA04', 'Not a device code sign-in');
+  skip(policies.deviceCode, 'Not a device code sign-in');
 
   if (s.app === 'portal') {
-    hit('CA05', 'baseline', 'grant', 'identity', 'Admin portals ask for MFA, whoever signs in.', ['MFA']);
-  } else skip('CA05', 'Not an admin portal');
+    hit(policies.portals, 'baseline', 'grant', 'identity', 'Admin portals ask for MFA, whoever signs in.', ['MFA']);
+  } else skip(policies.portals, 'Not an admin portal');
 
-  // Tier policies: enforced, or report-only while a rollout is being checked.
-  const officeBound = OFFICE_ROLES.includes(s.person) || (s.person === 'leader' && isLaptop(s.device));
-  if (officeBound && s.place === 'away') {
+  // Rollout: location and device policies, enforced or in report-only while they are checked.
+  if (s.place === 'unexpected') {
     hit(
-      'CA06',
-      'tier',
+      policies.location,
+      'rollout',
       'block',
       'place',
-      s.person === 'leader'
-        ? 'Team leaders use laptops in the office. Away from it, only their approved phone gets mail.'
-        : 'This role works from the office, so a sign-in from anywhere else is refused.',
+      'Sign-ins from countries the organisation does not work in are refused. Travel goes through a time-limited exception.',
     );
-  } else if (!officeBound) {
-    skip('CA06', s.person === 'leader' ? 'Phone sign-ins fall under CA09' : 'Role is not tied to the office');
-  } else skip('CA06', 'Signing in from the office network');
+  } else skip(policies.location, 'Usual country');
 
-  if (s.device === 'laptop') {
-    hit(
-      'CA07',
-      'tier',
-      'grant',
-      'device',
-      'A company laptop enrolled in Intune and passing its compliance checks.',
-      ['Compliant company device'],
-    );
-  } else if (s.device === 'personal') {
-    hit(
-      'CA07',
-      'tier',
-      'block',
-      'device',
-      'A personal laptop is not enrolled, so it cannot show it is compliant. The grant control fails and access is refused.',
-    );
-  } else skip('CA07', 'Not a laptop');
-
-  if (s.person === 'finance') {
-    hit(
-      'CA08',
-      'tier',
-      'grant',
-      'identity',
-      'Payments and supplier data: a phishing-resistant method, a fresh sign-in every hour and browser sessions that log downloads and sharing.',
-      ['Phishing-resistant MFA', 'Sign-in every hour', 'Monitored browser session'],
-    );
-  } else skip('CA08', 'Not in finance');
-
-  const phoneRole = PHONE_ROLES.includes(s.person);
-  if (isPhone(s.device) && phoneRole) {
-    if (s.device === 'newphone') {
-      hit('CA09', 'tier', 'block', 'device', 'One approved phone per person. A new phone is refused until a ticket approves it.');
-    } else if (s.app !== 'mail') {
-      hit('CA09', 'tier', 'block', 'device', 'On a phone, company data lives in Outlook and Teams only.');
-    } else {
+  if (member && laptop) {
+    if (s.device === 'laptop') {
       hit(
-        'CA09',
-        'tier',
+        policies.compliant,
+        'rollout',
         'grant',
         'device',
-        'Outlook and Teams under app protection: nothing saved to the phone, nothing copied out, and IT can wipe the app.',
-        ['App protection policy'],
+        'A company laptop enrolled in Intune and passing its compliance checks.',
+        ['Compliant device'],
+      );
+    } else {
+      hit(
+        policies.compliant,
+        'rollout',
+        'block',
+        'device',
+        'A personal laptop is not enrolled, so it cannot show it is compliant. The grant control fails and access is refused.',
       );
     }
-  } else skip('CA09', isPhone(s.device) ? 'Role has no phone access' : 'Not a phone');
+  } else skip(policies.compliant, member ? 'Not a laptop' : 'Guests are excluded; their devices are not ours to manage');
 
-  if (isPhone(s.device) && !phoneRole) {
-    hit('CA10', 'tier', 'block', 'device', 'This role has no phone access. Mail and files stay on the company laptop.');
-  } else skip('CA10', isPhone(s.device) ? 'Role has phone access' : 'Not a phone');
+  if (member && s.device === 'phone') {
+    hit(
+      policies.appProtection,
+      'rollout',
+      'grant',
+      'device',
+      'Company data stays inside managed apps: nothing saved to the phone, nothing copied out, and the data can be wiped.',
+      ['App protection policy'],
+    );
+  } else skip(policies.appProtection, member ? 'Not a phone' : 'Guests are excluded');
 
   // Risk policies: baseline.
   if (s.risk === 'signin') {
     hit(
-      'CA11',
+      policies.signinRisk,
       'baseline',
       'grant',
       'risk',
-      'Unfamiliar sign-in properties raise the sign-in risk. The user proves it again with a phishing-resistant method, every time.',
-      ['Phishing-resistant MFA', 'Sign-in every time'],
+      'Unfamiliar sign-in properties raise the sign-in risk, so the user proves it again, every time.',
+      ['MFA', 'Sign-in every time'],
     );
-  } else skip('CA11', 'No sign-in risk');
+  } else skip(policies.signinRisk, 'No sign-in risk');
 
   if (s.risk === 'user') {
     hit(
-      'CA12',
+      policies.userRisk,
       'baseline',
       'grant',
       'risk',
       'Leaked credentials raise the user risk. Access waits for MFA and a secure password change.',
       ['MFA', 'Secure password change'],
     );
-  } else skip('CA12', 'No user risk');
+  } else skip(policies.userRisk, 'No user risk');
 
   const blockers = hits.filter((h) => h.outcome === 'block' && h.enforced);
   const logged = hits.filter((h) => !h.enforced);
@@ -268,36 +238,27 @@ export function evaluate(s: Scenario): Result {
   requires.sort((a, b) => CONTROL_ORDER.indexOf(a) - CONTROL_ORDER.indexOf(b));
 
   const verdict: Result['verdict'] = blockers.length ? 'blocked' : 'granted';
-  const gates = gateViews(s, hits, requires);
 
   const notes: string[] = [];
-  if (logged.some((h) => h.outcome === 'block')) {
-    const ids = logged.filter((h) => h.outcome === 'block').map((h) => h.id);
+  const loggedBlocks = logged.filter((h) => h.outcome === 'block');
+  if (loggedBlocks.length) {
     notes.push(
-      `Report-only: ${list(ids)} would have blocked this sign-in. The result goes to the sign-in log for review, and nobody is locked out while the policy is checked.`,
+      `Report-only: ${quoted(loggedBlocks.map((h) => h.name))} would have blocked this sign-in. The result goes to the sign-in log for review, and nobody is locked out while the policy is checked.`,
     );
   } else if (logged.length) {
-    notes.push(`Report-only: ${list(logged.map((h) => h.id))} would add controls here. They are logged, not applied.`);
+    notes.push(`Report-only: ${quoted(logged.map((h) => h.name))} would add controls here. They are logged, not applied.`);
   }
   if (verdict === 'granted' && s.app === 'portal' && s.person !== 'admin') {
     notes.push('Signed in to the portal, but with no admin role there is nothing to manage.');
   }
-  if (verdict === 'granted' && s.app === 'files' && s.person === 'finance') {
-    notes.push('Browser sessions for finance run through session monitoring, so downloads and sharing are logged.');
-  }
 
-  return { verdict, blockers, logged, hits, skipped, requires, gates, notes };
-}
-
-function list(ids: string[]) {
-  if (ids.length < 2) return ids.join('');
-  return `${ids.slice(0, -1).join(', ')} and ${ids[ids.length - 1]}`;
+  return { verdict, blockers, logged, hits, skipped, requires, gates: gateViews(s, hits, requires), notes };
 }
 
 function gateViews(s: Scenario, hits: Hit[], requires: string[]): Record<Gate, GateView> {
   const on = (gate: Gate) => hits.filter((h) => h.gate === gate);
-  const blockedOn = (gate: Gate) => on(gate).find((h) => h.outcome === 'block' && h.enforced);
-  const loggedOn = (gate: Gate) => on(gate).find((h) => h.outcome === 'block' && !h.enforced);
+  const blockedOn = (gate: Gate) => on(gate).some((h) => h.outcome === 'block' && h.enforced);
+  const loggedBlockOn = (gate: Gate) => on(gate).some((h) => h.outcome === 'block' && !h.enforced);
 
   const identity: GateView = blockedOn('identity')
     ? { state: 'block', value: 'Legacy protocol' }
@@ -306,31 +267,18 @@ function gateViews(s: Scenario, hits: Hit[], requires: string[]): Record<Gate, G
       : { state: 'step', value: 'MFA' };
 
   let device: GateView;
-  const dBlock = blockedOn('device');
-  const dLog = loggedOn('device');
-  if (dBlock) {
-    const value =
-      dBlock.id === 'CA07'
-        ? 'Not compliant'
-        : dBlock.id === 'CA10'
-          ? 'No phone access'
-          : s.device === 'newphone'
-            ? 'Phone not approved'
-            : 'Mail apps only';
-    device = { state: 'block', value };
-  } else if (dLog) device = { state: 'logged', value: 'Would block' };
+  if (blockedOn('device')) device = { state: 'block', value: 'Not compliant' };
+  else if (loggedBlockOn('device')) device = { state: 'logged', value: 'Would block' };
   else if (requires.includes('App protection policy')) device = { state: 'step', value: 'App protection' };
-  else if (requires.includes('Compliant company device')) device = { state: 'pass', value: 'Compliant laptop' };
+  else if (requires.includes('Compliant device')) device = { state: 'pass', value: 'Compliant laptop' };
   else if (on('device').some((h) => !h.enforced)) device = { state: 'logged', value: 'Logged only' };
-  else device = { state: 'pass', value: 'Not checked' };
+  else device = { state: 'pass', value: s.person === 'guest' ? 'Not checked for guests' : 'Not checked' };
 
-  const pBlock = blockedOn('place');
-  const pLog = loggedOn('place');
-  const place: GateView = pBlock
-    ? { state: 'block', value: 'Outside the office' }
-    : pLog
+  const place: GateView = blockedOn('place')
+    ? { state: 'block', value: 'Unexpected country' }
+    : loggedBlockOn('place')
       ? { state: 'logged', value: 'Would block' }
-      : { state: 'pass', value: s.place === 'office' ? 'Office network' : 'Allowed away' };
+      : { state: 'pass', value: 'Usual country' };
 
   const risk: GateView =
     s.risk === 'signin'

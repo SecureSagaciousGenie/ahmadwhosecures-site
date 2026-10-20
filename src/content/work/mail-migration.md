@@ -1,50 +1,39 @@
 ---
 title: Google Workspace to MS 365, with a new identity baseline
-claim: Moved a business from Google Workspace to MS 365 across three mail domains, and rebuilt the identity baseline on the way.
-evidence: 78 user and 17 shared mailboxes, about 1.8 TB, migrated with MigrationWiz into one tenant. Security Defaults replaced mid-migration by a five-policy Conditional Access baseline with break-glass accounts.
-status: In progress
-statusNote: Mailbox data migrated. Cutover tail and device rebuilds under way.
+claim: How I move a business from Google Workspace to MS 365 and rebuild the identity baseline on the way, without a big-bang cutover.
+evidence: A phased migration on MigrationWiz with a gate at the end of each phase, oversized mailboxes split into their own project, leavers handled as shared mailboxes, and Security Defaults replaced by a Conditional Access baseline with break-glass accounts.
+kind: Migration
 frameworks:
   - MS 365
   - Exchange Online
   - Entra ID Conditional Access
   - MigrationWiz
-  - CMMC Level 1
-setting: US defense contractor
-period: August to October 2026
+setting: Defense sector
 order: 2
 related:
   - migrationwiz-mailbox-size-is-not-source-size
   - aadsts50079-security-defaults-to-conditional-access
 ---
 
-## Setting
-
-The business ran on Google Workspace Business Starter with three mail domains. Federal sales teams used a handful of very large shared mailboxes, one line-of-business system read a mailbox over legacy authentication, and several leavers' accounts were still delivering mail into active users' inboxes.
-
 ## Constraints
 
-Two dates drove the plan. MS announced that EWS in Exchange Online would be blocked by default from October 2026 unless an app is on the tenant's allow list, and the migration tool writes to the destination over EWS. The CMMC Level 1 baseline also depended on the move, because identity and device controls were to be built on the new tenant rather than the old one.
+Two things tend to drive the plan. MS announced that EWS in Exchange Online would be blocked by default from October 2026 unless an app is on the tenant's allow list, and the migration tool writes to the destination over EWS. And when a compliance baseline depends on the move, identity and device controls are better built on the new tenant than retrofitted to the old one.
 
-## What I did
+## What I do
 
-I planned the migration in seven phases with a gate at the end of each, ran it on BitTitan MigrationWiz, and owned the MS-side and Google-side configuration myself. The IT team owned data extraction and device rebuilds, with one named owner for every field task.
+I plan the migration in phases with a gate at the end of each, run it on BitTitan MigrationWiz and own the MS-side and Google-side configuration myself. Field tasks such as data extraction and device rebuilds each get one named owner.
 
-- Three vanity domains route into a single tenant.
-- Mailboxes went in four projects: primary, shared, archive and a split project for five oversized mailboxes, so the large ones could not block everyone else.
-- Leavers' mailboxes that still received mail became shared mailboxes with permissions and retention, rather than licensed accounts.
-- Users moved to freshly built laptops from a pool of swap devices on a two-day rotation. Anyone still waiting worked in Outlook on the web.
+- Vanity domains route into a single tenant.
+- Mailboxes go in separate projects for primary, shared and archive data, with a split project for the oversized ones so they cannot block everyone else.
+- Leavers' mailboxes that still receive mail become shared mailboxes with permissions and retention, rather than licensed accounts.
+- Users move to freshly built laptops on a rotation. Anyone still waiting works in Outlook on the web.
 
 ## Decisions and trade-offs
 
-**Identity mid-flight.** The migration service account failed destination authentication with AADSTS50079 because the tenant still ran Security Defaults. Rather than weaken Security Defaults, I replaced them with a Conditional Access baseline and a scoped, time-boxed exclusion for the migration account. The full reasoning is in [the write-up](/writing/aadsts50079-security-defaults-to-conditional-access/).
+**Identity mid-flight.** A migration service account can fail destination authentication with AADSTS50079 while the tenant still runs Security Defaults. Rather than weaken Security Defaults, I replace them with a Conditional Access baseline and a scoped, time-boxed exclusion for the migration account. The full reasoning is in [the write-up](/writing/aadsts50079-security-defaults-to-conditional-access/).
 
-**Size forecasts.** MigrationWiz reported destination sizes far above what Google showed. The gap turned out to be Gmail labels becoming folders, which duplicates any message with more than one label. Two shared mailboxes carried multipliers of 1.67 and 1.82. That changed which mailboxes would fit and how long passes would take. [Measured detail here](/writing/migrationwiz-mailbox-size-is-not-source-size/).
+**Size forecasts.** MigrationWiz can report destination sizes well above what Google shows. The gap is Gmail labels becoming folders, which duplicates any message with more than one label, and shared team inboxes carry the largest multipliers. That changes which mailboxes fit and how long passes take, so I measure it before planning the cutover. [Measured detail here](/writing/migrationwiz-mailbox-size-is-not-source-size/).
 
-**Throughput.** EWS throttling relief stopped passes from aborting, but the per-mailbox write rate stayed capped. Large mailboxes were planned around that ceiling, not around the relief.
+**Throughput.** EWS throttling relief stops passes from aborting, but the per-mailbox write rate stays capped. Large mailboxes are planned around that ceiling, not around the relief.
 
-**Legacy authentication.** The line-of-business system that reads a mailbox could not do modern authentication. That made it a cutover blocker with its own exclusion group and a vendor question, rather than something to discover on cutover night.
-
-## Where it stands
-
-Bulk mailbox data is in MS 365. The cutover tail, leaver mailbox handling and laptop rebuild rotation are under way, with location-based access rules held in report-only until cutover completes.
+**Legacy authentication.** Anything that reads a mailbox without modern authentication becomes a cutover blocker with its own exclusion group and a vendor question, rather than something to discover on cutover night.
