@@ -1,35 +1,31 @@
 ---
 // Author: Ahmad Shaukat
-// Persistent HUD header: brand, terminal prompt, navigation, status and clock.
+// Site header: mark, navigation, search and theme. The search and theme buttons stay hidden
+// until JavaScript can run them; navigation never depends on it.
+import BrandMark from './BrandMark.astro';
+import Icon from './Icon.astro';
 import { site, nav } from '../site.config';
 
 const path = Astro.url.pathname;
 const isCurrent = (href: string) => path.startsWith(href);
 ---
 
-<header class="site-header" transition:persist="header" data-header>
-  <div class="container header-row">
+<header class="hdr" data-header>
+  <div class="container hdr-row">
     <a class="brand" href="/" aria-label={`${site.name}, home`}>
-      <svg class="brand-mark" viewBox="0 0 40 40" aria-hidden="true">
-        <circle class="ring" cx="20" cy="20" r="18.5"></circle>
-        <polygon class="hex" points="20,5 33,12.5 33,27.5 20,35 7,27.5 7,12.5"></polygon>
-        <text x="20" y="24.5" text-anchor="middle">AS</text>
-      </svg>
-      <span class="brand-text">
+      <BrandMark class="brand-mark" />
+      <span>
         <span class="brand-name">{site.name}</span>
-        <span class="prompt" aria-hidden="true"
-          ><span class="user">ahmad@whosecures</span>:~$ <span class="cmd" data-prompt-cmd>cd {path}</span><span
-            class="caret"></span></span
-        >
+        <span class="brand-handle">{site.handle}</span>
       </span>
     </a>
 
-    <nav class="site-nav" id="site-nav" aria-label="Main">
+    <nav class="nav" aria-label="Main">
       <ul>
         {
           nav.map((item) => (
             <li>
-              <a href={item.href} data-nav aria-current={isCurrent(item.href) ? 'page' : undefined}>
+              <a href={item.href} aria-current={isCurrent(item.href) ? 'page' : undefined}>
                 {item.label}
               </a>
             </li>
@@ -38,20 +34,30 @@ const isCurrent = (href: string) => path.startsWith(href);
       </ul>
     </nav>
 
-    <div class="header-status" aria-hidden="true">
-      <span class="secure-chip"><span class="pulse-dot"></span>SECURE</span>
-      <span class="clock" data-clock>--:--:-- UTC</span>
+    <div class="hdr-actions">
+      <button
+        class="icon-btn palette-btn"
+        type="button"
+        aria-label="Search pages and articles"
+        aria-keyshortcuts="Control+K Meta+K"
+        data-palette-open
+        hidden
+      >
+        <Icon name="search" />
+        <span class="palette-label">Search</span>
+        <kbd data-palette-kbd>Ctrl K</kbd>
+      </button>
+      <button
+        class="icon-btn theme-btn"
+        type="button"
+        aria-label="Switch to light theme"
+        aria-pressed="false"
+        data-theme-toggle
+        hidden
+      >
+        <Icon name="moon" class="i-moon" />
+        <Icon name="sun" class="i-sun" />
+      </button>
     </div>
-
-    <button
-      class="menu-toggle"
-      type="button"
-      aria-controls="site-nav"
-      aria-expanded="false"
-      aria-label="Open menu"
-      data-menu-toggle
-    >
-      <span></span><span></span><span></span>
-    </button>
   </div>
 </header>

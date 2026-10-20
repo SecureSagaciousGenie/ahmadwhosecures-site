@@ -1,0 +1,63 @@
+---
+// Author: Ahmad Shaukat
+// Quick navigation: Ctrl+K, Cmd+K or "/" opens a filtered list of every page, case file and article.
+import Icon from './Icon.astro';
+import { getCollection } from 'astro:content';
+import { byNewest } from '../lib/sort';
+
+const work = (await getCollection('work')).sort((a, b) => a.data.order - b.data.order);
+const writing = (await getCollection('writing', ({ data }) => !data.draft)).sort(byNewest);
+
+const items = [
+  { group: 'Page', label: 'Home', href: '/' },
+  { group: 'Page', label: 'Case files', href: '/work/' },
+  { group: 'Page', label: 'Field notes', href: '/writing/' },
+  { group: 'Page', label: 'Tools: Win11-Security-Optimizer', href: '/tools/' },
+  { group: 'Page', label: 'About', href: '/about/' },
+  { group: 'Page', label: 'Contact', href: '/contact/' },
+  ...work.map((w) => ({ group: 'Case file', label: w.data.title, href: `/work/${w.id}/` })),
+  ...writing.map((w) => ({ group: 'Field note', label: w.data.title, href: `/writing/${w.id}/` })),
+];
+---
+
+<dialog class="pal" aria-label="Search pages and articles" data-palette>
+  <div class="pal-search">
+    <Icon name="search" />
+    <input
+      type="search"
+      placeholder="Jump to a page, case file or article"
+      aria-label="Search"
+      role="combobox"
+      aria-expanded="true"
+      aria-controls="pal-list"
+      aria-autocomplete="list"
+      autocomplete="off"
+      spellcheck="false"
+      data-palette-input
+    />
+    <kbd>Esc</kbd>
+  </div>
+  <ul class="pal-list" id="pal-list" role="listbox" aria-label="Results">
+    {
+      items.map((it, i) => (
+        <li role="presentation">
+          <a
+            class="pal-item"
+            id={`pal-${i}`}
+            role="option"
+            href={it.href}
+            data-palette-item
+            data-text={`${it.group} ${it.label}`.toLowerCase()}
+          >
+            <span class="pal-group">{it.group}</span>
+            <span>{it.label}</span>
+          </a>
+        </li>
+      ))
+    }
+  </ul>
+  <p class="pal-empty" data-palette-empty hidden>No page matches that.</p>
+  <p class="pal-hint">
+    <kbd>&uarr;</kbd><kbd>&darr;</kbd> move <kbd>Enter</kbd> open <kbd>Esc</kbd> close
+  </p>
+</dialog>

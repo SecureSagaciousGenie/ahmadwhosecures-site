@@ -1,0 +1,66 @@
+---
+// Author: Ahmad Shaukat
+// Interactive Conditional Access example. The first result is rendered at build time,
+// so the panel reads correctly before, or without, any JavaScript.
+import { evaluate, defaultScenario, options, type Scenario } from '../lib/signin';
+import { renderResult, summarise } from '../lib/signin-render';
+
+type Key = keyof Scenario;
+const groups: { key: Exclude<Key, 'mode'>; legend: string }[] = [
+  { key: 'person', legend: 'Who is signing in' },
+  { key: 'place', legend: 'From where' },
+  { key: 'device', legend: 'On what' },
+  { key: 'app', legend: 'To what' },
+  { key: 'risk', legend: 'Risk signal' },
+];
+
+const first = evaluate(defaultScenario);
+---
+
+<div class="sim" data-sim>
+  <div class="sim-controls" role="group" aria-label="Sign-in scenario">
+    {
+      groups.map((g) => (
+        <fieldset class="sim-group">
+          <legend>{g.legend}</legend>
+          <div class="seg">
+            {options[g.key].map(([value, label]) => (
+              <label>
+                <input type="radio" name={`sim-${g.key}`} value={value} checked={defaultScenario[g.key] === value} />
+                <span>{label}</span>
+              </label>
+            ))}
+          </div>
+        </fieldset>
+      ))
+    }
+    <fieldset class="sim-group sim-mode">
+      <legend>Policies CA06 to CA10</legend>
+      <div class="seg">
+        {
+          options.mode.map(([value, label]) => (
+            <label>
+              <input type="radio" name="sim-mode" value={value} checked={defaultScenario.mode === value} />
+              <span>{label}</span>
+            </label>
+          ))
+        }
+      </div>
+      <p class="sim-mode-note">
+        New policies run in report-only first. The sign-in log shows who they would block before they block anyone.
+      </p>
+    </fieldset>
+    <noscript>
+      <p class="sim-nojs">
+        Changing the scenario needs JavaScript. Without it, this panel shows one example: finance staff signing in away
+        from the office on a company laptop.
+      </p>
+    </noscript>
+  </div>
+  <div class="sim-out" data-sim-out set:html={renderResult(first)} />
+  <p class="sr-only" aria-live="polite" data-sim-live>{summarise(first)}</p>
+</div>
+<p class="sim-foot">
+  An example policy set built the way I build them, not any client's configuration. Entra ID evaluates every policy that
+  applies to a sign-in; a block from any one of them wins, and the grant controls of the rest add up.
+</p>

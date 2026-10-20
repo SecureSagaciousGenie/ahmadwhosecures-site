@@ -1,18 +1,19 @@
 ---
 // Author: Ahmad Shaukat
 import Base from '../layouts/Base.astro';
+import Icon from '../components/Icon.astro';
 ---
 
-<Base title="Route not found">
+<Base title="Page not found" description="The address does not match a page on this site.">
   <div class="container denied">
-    <p class="code" aria-hidden="true">404</p>
-    <p class="kicker">route lookup failed</p>
-    <h1 style="font-size: var(--step-3)">Access denied: this route does not exist.</h1>
-    <p style="color: var(--ink-2); max-width: 56ch">
-      The address does not match a page on this site. Head back to a known route.
-    </p>
+    <p class="denied-code" aria-hidden="true">404</p>
+    <h1 class="subhead" style="margin: 0">No page at this address</h1>
+    <div class="denied-card">
+      <b>CA404</b>
+      <p>Blocked: the route does not match any page on this site. Head back to a known route, or press / to search.</p>
+    </div>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="/">Return to base</a>
+      <a class="btn btn-primary" href="/">Home<Icon name="arrow" /></a>
       <a class="btn btn-ghost" href="/work/">Case files</a>
       <a class="btn btn-ghost" href="/writing/">Field notes</a>
     </div>

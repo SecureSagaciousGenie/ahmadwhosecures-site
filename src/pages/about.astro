@@ -1,7 +1,6 @@
 ---
 // Author: Ahmad Shaukat
 import Base from '../layouts/Base.astro';
-import Decrypt from '../components/Decrypt.astro';
 import Status from '../components/Status.astro';
 import { site } from '../site.config';
 
@@ -28,11 +27,11 @@ const experience = [
   },
 ];
 
-const creds: Array<[string, 'Implemented' | 'In progress' | 'Shipped', string]> = [
-  ['Bachelor of Information Technology (Network Security), TAFE NSW', 'Implemented', 'Completed'],
-  ['ISC2 Certified in Cybersecurity', 'In progress', 'Exam scheduled, late 2026'],
-  ['Risk Management Framework (RMF) course', 'In progress', 'In progress'],
-  ['CISSP', 'Shipped', 'Planned, 2027'],
+const creds = [
+  { name: 'Bachelor of Information Technology (Network Security), TAFE NSW', status: 'Completed', when: '' },
+  { name: 'ISC2 Certified in Cybersecurity', status: 'Scheduled', when: 'Exam booked for late 2026' },
+  { name: 'Risk Management Framework (RMF) course', status: 'In progress', when: '' },
+  { name: 'CISSP', status: 'Planned', when: 'Target: 2027' },
 ];
 
 const toolset = [
@@ -50,39 +49,41 @@ const toolset = [
   description="Ahmad Shaukat: principal information security engineer working across CMMC, NIST SP 800-171, ISO 27001, DFIR, SOC operations, DevOps and network engineering."
 >
   <div class="container">
-    <header class="page-head">
-      <p class="crumbs"><a href="/">~</a>/about</p>
-      <h1><Decrypt text="About" /></h1>
+    <header class="phead">
+      <ol class="crumbs">
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">About</li>
+      </ol>
+      <h1>About</h1>
       <p class="lede">
         I am a principal information security engineer. I work as the only security practitioner at a US defense
         contractor, so the controls I build and the evidence behind them are both mine to answer for.
       </p>
     </header>
 
-    <div class="split">
-      <section class="panel hud card" data-reveal aria-labelledby="how-title">
-        <p class="card-label">cat ./method</p>
-        <h2 id="how-title" style="font-size: var(--step-2)">How I work</h2>
+    <section class="about-grid doc-after" aria-labelledby="how-title">
+      <div class="prose">
+        <h2 id="how-title">How I work</h2>
         <p>
-          I start from the evidence an assessor or an incident responder will ask for, then work back to the control
-          that produces it. A control that cannot show its own evidence is a gap, whatever the policy says.
+          I start from the evidence an assessor or an incident responder will ask for, then work back to the control that
+          produces it. A control that cannot show its own evidence is a gap, whatever the policy says.
         </p>
         <p>
-          I prefer changes that can be undone. Hardening that breaks a business process tends to get rolled back in a
-          hurry and not reapplied. Rollback plans, before-state backups and report-only phases are part of the build,
-          not an afterthought.
+          I prefer changes that can be undone. Hardening that breaks a business process tends to get rolled back in a hurry
+          and not reapplied. Rollback plans, before-state backups and report-only phases are part of the build, not an
+          afterthought.
         </p>
         <p>
           I write decisions down with their trade-offs. Most security choices in a small business are a balance between
-          cost, user friction and risk. The record of why a choice was made is often worth more in an assessment than
-          the choice itself.
+          cost, user friction and risk. The record of why a choice was made is often worth more in an assessment than the
+          choice itself.
         </p>
-      </section>
+      </div>
 
-      <section class="panel card" data-reveal style="--reveal-delay: 0.08s" aria-labelledby="now-title">
-        <p class="card-label">cat ./now</p>
-        <h2 id="now-title" style="font-size: var(--step-2)">Now and next</h2>
-        <p>
+      <aside class="now" aria-labelledby="now-title">
+        <p class="eyebrow"><span class="eyebrow-mark"></span>Now and next</p>
+        <h2 id="now-title" class="sr-only">Now and next</h2>
+        <p style="margin-top: 1rem">
           Current work covers a CMMC Level 2 enclave build, a Google Workspace to MS 365 migration with a new identity
           baseline, and an on-prem SIEM and DFIR stack.
         </p>
@@ -91,60 +92,61 @@ const toolset = [
           independent security research under the handle {site.handle}.
         </p>
         <p>From 2027 I plan to offer fractional security advisory work to small defense industrial base contractors.</p>
-      </section>
-    </div>
+      </aside>
+    </section>
 
-    <section class="section" aria-labelledby="exp-title">
-      <div class="section-head" data-reveal>
-        <div>
-          <p class="kicker">history | head</p>
-          <h2 id="exp-title"><Decrypt text="Experience" /></h2>
-        </div>
-        <p>Described by industry. Detail is on LinkedIn.</p>
-      </div>
-      <ol class="timeline">
+    <section class="doc-after" aria-labelledby="exp-title">
+      <p class="eyebrow"><span class="eyebrow-mark"></span>Career</p>
+      <h2 class="subhead" id="exp-title">Experience</h2>
+      <ol class="xp">
         {
-          experience.map((e, i) => (
-            <li data-reveal style={`--reveal-delay:${i * 0.08}s`}>
-              <p class="tl-setting">{e.setting}</p>
-              <h3>{e.role}</h3>
-              <p>{e.work}</p>
+          experience.map((e) => (
+            <li class="reveal">
+              <p class="xp-setting">{e.setting}</p>
+              <div>
+                <h3 class="xp-role">{e.role}</h3>
+                <p class="xp-work">{e.work}</p>
+              </div>
             </li>
           ))
         }
       </ol>
+      <p class="fine" style="margin-top: 0">
+        Employers are described by industry. Dates and detail are on <a href={site.linkedin} rel="me noopener">LinkedIn</a>.
+      </p>
     </section>
 
-    <section class="section" aria-labelledby="cred-title">
-      <div class="split">
-        <div class="panel card" data-reveal>
-          <p class="card-label">ls ./credentials</p>
-          <h2 id="cred-title" style="font-size: var(--step-2)">Education and credentials</h2>
-          <ul class="cred-list">
-            {
-              creds.map(([name, status, label]) => (
-                <li>
-                  <span>{name}</span>
-                  <Status status={status} label={label} />
-                </li>
-              ))
-            }
-          </ul>
-        </div>
-        <div class="panel card" data-reveal style="--reveal-delay: 0.08s">
-          <p class="card-label">which --all</p>
-          <h2 style="font-size: var(--step-2)">Working toolset</h2>
-          <ul class="cred-list">
-            {
-              toolset.map(([area, tools]) => (
-                <li style="display: block">
-                  <span class="card-label" style="display: block">{area}</span>
-                  <span>{tools}</span>
-                </li>
-              ))
-            }
-          </ul>
-        </div>
+    <section class="split-2 doc-after" aria-label="Credentials and toolset">
+      <div>
+        <p class="eyebrow"><span class="eyebrow-mark"></span>Education</p>
+        <h2 class="subhead">Credentials</h2>
+        <ul class="cred">
+          {
+            creds.map((c) => (
+              <li>
+                <span>
+                  <span class="cred-name">{c.name}</span>
+                  {c.when && <span class="cred-when">{c.when}</span>}
+                </span>
+                <Status status={c.status} />
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+      <div>
+        <p class="eyebrow"><span class="eyebrow-mark"></span>Toolset</p>
+        <h2 class="subhead">What I work with</h2>
+        <dl class="kit">
+          {
+            toolset.map(([area, tools]) => (
+              <div>
+                <dt>{area}</dt>
+                <dd>{tools}</dd>
+              </div>
+            ))
+          }
+        </dl>
       </div>
     </section>
   </div>

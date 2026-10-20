@@ -1,0 +1,20 @@
+---
+// Author: Ahmad Shaukat
+// The mark: a page of evidence with its corner folded and a tick on it.
+interface Props {
+  class?: string;
+}
+const { class: cls } = Astro.props;
+---
+
+<svg class={cls} viewBox="0 0 32 32" aria-hidden="true" focusable="false">
+  <path class="bm-page" d="M5 2h15l7 7v21H5z"></path>
+  <path class="bm-fold" d="M20 2v7h7z"></path>
+  <path
+    class="bm-tick"
+    d="M10.5 17.5l4 4 7.5-8"
+    fill="none"
+    stroke-width="3"
+    stroke-linecap="round"
+    stroke-linejoin="round"></path>
+</svg>

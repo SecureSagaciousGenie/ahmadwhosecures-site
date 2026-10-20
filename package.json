@@ -7,17 +7,17 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "preview:headers": "node scripts/serve.mjs dist 4321",
+    "test": "node --experimental-strip-types --no-warnings tests/signin.test.ts"
   },
   "dependencies": {
     "@astrojs/mdx": "^8.0.3",
     "@astrojs/rss": "^4.0.19",
     "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/hubot-sans": "^5.3.0",
     "@fontsource-variable/ibm-plex-sans": "^5.3.0",
     "@fontsource-variable/jetbrains-mono": "^5.3.0",
-    "@fontsource-variable/public-sans": "^5.3.0",
-    "@fontsource-variable/source-serif-4": "^5.3.1",
-    "@fontsource/chakra-petch": "^5.3.0",
     "astro": "^7.3.8"
   },
   "engines": {

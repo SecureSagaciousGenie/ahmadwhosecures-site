@@ -1,15 +1,13 @@
 ---
 // Author: Ahmad Shaukat
-// Severity-style status pill. In progress pulses amber; Implemented is green; Shipped is cyan.
+// Status pill in assessment language: Implemented and Shipped are green, In progress is blue.
 interface Props {
-  status: 'Implemented' | 'In progress' | 'Shipped';
+  status: string;
   label?: string;
-  note?: string;
 }
-const { status, label, note } = Astro.props;
+
+const { status, label } = Astro.props;
+const key = status.toLowerCase().replace(/\s+/g, '-');
 ---
 
-<div>
-  <span class="status" data-status={status}><span class="pulse-dot" aria-hidden="true"></span>{label ?? status}</span>
-  {note && <p class="status-note">{note}</p>}
-</div>
+<span class="status" data-status={key}>{label ?? status}</span>

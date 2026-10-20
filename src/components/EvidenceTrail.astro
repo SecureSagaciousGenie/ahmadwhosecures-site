@@ -1,0 +1,138 @@
+---
+// Author: Ahmad Shaukat
+// Hero panel: one requirement traced to the control, the build and the evidence an assessor opens.
+// The picker is a radio group, so it works without JavaScript; the script only adds autoplay.
+const items = [
+  {
+    id: '3.5.3',
+    title: 'Multifactor authentication',
+    cmmc: 'IA.L2-3.5.3',
+    control:
+      'Every account signs in with MFA. Admin roles and admin portals have their own policies, so splitting the main policy later cannot weaken them.',
+    build:
+      'Entra ID Conditional Access: CA01 for all users, CA02 for admin roles, CA05 for admin portals. CA03 blocks legacy protocols that cannot do MFA.',
+    files: ['ca-policy-export.json', 'report-only-results.csv', 'signin-log-sample.csv'],
+    scope: 'Commercial tenant',
+    status: 'implemented',
+    label: 'Implemented',
+  },
+  {
+    id: '3.1.1',
+    title: 'Authorized access',
+    cmmc: 'AC.L2-3.1.1',
+    control: 'Named accounts only, with access set by role, location and device rather than by a password alone.',
+    build:
+      'Unique Entra ID accounts, a break-glass pair excluded through one purpose-named group, and access tiers by role, location and device.',
+    files: ['account-review.xlsx', 'exclusion-groups.csv', 'access-tiers.md'],
+    scope: 'Tiers moving from report-only to enforced',
+    status: 'in-progress',
+    label: 'In progress',
+  },
+  {
+    id: '3.3.1',
+    title: 'System audit logs',
+    cmmc: 'AU.L2-3.3.1',
+    control: 'Logs that show who did what, kept for a retention period written into the SSP.',
+    build:
+      'Wazuh on servers the business already owned, Sysmon on every Windows endpoint, five event channels and an index lifecycle policy sized for retention.',
+    files: ['agent-coverage.csv', 'index-lifecycle-policy.json', 'ssp-au-3.3.1.docx'],
+    scope: 'Production build under way',
+    status: 'in-progress',
+    label: 'In progress',
+  },
+  {
+    id: '3.6.1',
+    title: 'Incident handling',
+    cmmc: 'IR.L2-3.6.1',
+    control:
+      'A way to run an incident from first alert to closed case, with preparation, analysis, containment and recovery written down.',
+    build:
+      'TheHive, Cortex and MISP for case handling. KAPE and THOR Lite triage, practised against known plants on a lab machine.',
+    files: ['ir-runbook.pdf', 'case-template.json', 'lab-exercise-hashes.txt'],
+    scope: 'Workflow in use on lab data',
+    status: 'in-progress',
+    label: 'In progress',
+  },
+  {
+    id: '3.13.11',
+    title: 'FIPS-validated cryptography',
+    cmmc: 'SC.L2-3.13.11',
+    control: 'Cryptography protecting CUI uses validated modules, each one named by its certificate.',
+    build:
+      'Validated modules inside the CUI enclave. A reference sheet lists the CMVP certificate number for every module the SSP relies on.',
+    files: ['fips-reference.xlsx', 'cmvp-certificates.pdf', 'ssp-sc-3.13.11.docx'],
+    scope: 'Enclave in build',
+    status: 'in-progress',
+    label: 'In progress',
+  },
+];
+---
+
+<div class="trail-wrap">
+  <section class="trail" aria-labelledby="trail-title" data-trail>
+    <div class="trail-top">
+      <h2 class="trail-title" id="trail-title">From requirement to evidence</h2>
+      <p class="trail-src">NIST SP 800-171 Rev 2</p>
+    </div>
+
+    <fieldset class="trail-picker">
+      <legend class="sr-only">Choose a requirement</legend>
+      {
+        items.map((it, i) => (
+          <label class="trail-opt">
+            <input type="radio" name="trail-req" value={String(i)} checked={i === 0} />
+            <span class="trail-key">
+              <span>{it.id}</span>
+              <span class="trail-bar" aria-hidden="true">
+                <i />
+              </span>
+            </span>
+          </label>
+        ))
+      }
+    </fieldset>
+
+    {
+      items.map((it, i) => (
+        <div class="trail-panel" data-panel={String(i)}>
+          <ol class="ts-list">
+            <li class="ts" style="--i:0">
+              <span class="ts-k">Requirement</span>
+              <div class="ts-req">
+                <span class="ts-id">{it.id}</span>
+                <span class="ts-title">{it.title}</span>
+                <span class="ts-tag">{it.cmmc}</span>
+              </div>
+            </li>
+            <li class="ts" style="--i:1">
+              <span class="ts-k">Control</span>
+              <p class="ts-v">{it.control}</p>
+            </li>
+            <li class="ts" style="--i:2">
+              <span class="ts-k">Built with</span>
+              <p class="ts-v">{it.build}</p>
+            </li>
+            <li class="ts" style="--i:3">
+              <span class="ts-k">Evidence an assessor opens</span>
+              <ul class="ts-files">
+                {it.files.map((f) => (
+                  <li>{f}</li>
+                ))}
+              </ul>
+            </li>
+          </ol>
+          <div class="trail-foot">
+            <p class="trail-scope">{it.scope}</p>
+            <p class="stamp" data-status={it.status}>
+              {it.label}
+            </p>
+          </div>
+        </div>
+      ))
+    }
+  </section>
+  <p class="trail-note">
+    The mapping reflects my reading of NIST SP 800-171 Rev 2 and the CMMC Level 2 assessment guidance; it is not legal
+    advice. File names are illustrative.
+  </p>
+</div>

@@ -1,18 +1,98 @@
 ---
 // Author: Ahmad Shaukat
 import Base from '../layouts/Base.astro';
-import Decrypt from '../components/Decrypt.astro';
 import Status from '../components/Status.astro';
+import ChangeRecord from '../components/ChangeRecord.astro';
+import SectionHead from '../components/SectionHead.astro';
+import Icon from '../components/Icon.astro';
 
 const repo = 'https://github.com/SecureSagaciousGenie/Win11-Security-Optimizer';
 
-const features = [
-  ['Security', 'Audits firewall, Defender, SmartScreen, UAC, SMBv1, LLMNR, AutoRun, RDP and more. Fixes are tiered Safe, Elevated, High-risk or Audit-only.'],
-  ['Investigate', 'Hidden admins, backdoor accounts, persistence, exposed remote access, Defender exclusions and hosts-file tampering, explained in plain English.'],
-  ['Deep Scan', 'Native process and event-log hunt: masquerading binaries, encoded PowerShell, download cradles, LOLBin abuse and log clearing.'],
-  ['Pro Tools', 'Opt-in Hayabusa and Chainsaw, downloaded on consent from official releases and checked against a pinned SHA-256.'],
-  ['Debloat', 'Ticked removal of consumer apps with reinstall notes. Every removal is logged and reversible from the MS Store.'],
-  ['Restore and logs', 'Restore point first, JSON before-state for every change, a rollback script and a full session transcript.'],
+const groups = [
+  {
+    icon: 'shield' as const,
+    name: 'Harden',
+    points: [
+      'Audits Defender, the firewall, SmartScreen, UAC, SMBv1, LLMNR, AutoRun, RDP, Secure Boot, TPM and BitLocker, with a risk tier and a fix for each finding.',
+      'Credential-theft hardening: LSA protection, WDigest, PowerShell 2.0, NetBIOS and mDNS name resolution, SMB signing, Credential Guard and patch age.',
+      'Opt-in Sysmon: enables the built-in Windows feature or installs MS Sysmon with a bundled, pinned sysmon-modular config.',
+    ],
+  },
+  {
+    icon: 'scan' as const,
+    name: 'Investigate',
+    points: [
+      'Plain-English compromise checks: hidden or extra admins, backdoor accounts, startup persistence, exposed remote access, risky ports and shares, Defender exclusions and hosts-file tampering.',
+      'Deep Scan: masquerading processes, programs running from Temp or AppData, suspicious command lines and event-log triage.',
+      'Pro Tools: Hayabusa and Chainsaw event-log hunts and Sysinternals Autoruns, each downloaded only after a consent screen.',
+      'Baseline and drift: save a known-good snapshot and see what is new since.',
+    ],
+  },
+  {
+    icon: 'report' as const,
+    name: 'Report and respond',
+    points: [
+      'One self-contained HTML report with no scripts and no external resources.',
+      'Evidence pack: event logs, processes with hashes and signers, TCP connections and findings, zipped with a SHA-256 manifest.',
+      'Headless scan for scripts and RMM tools, with exit codes for clean, review, alert and failed.',
+    ],
+  },
+  {
+    icon: 'clean' as const,
+    name: 'Clean up',
+    points: [
+      'Debloat with an impact level, a one-line risk note and a reinstall route per app, plus Recommended and Minimal presets.',
+      'Startup manager with publisher and signature status. Disabling an entry is reversible.',
+    ],
+  },
+];
+
+const rules = [
+  ['Read-only by default', 'Scans only read. Nothing changes until you tick an item and confirm.'],
+  ['Restore point first', 'Created before the first change in a session.'],
+  ['Backup before every change', 'The previous value is saved to a JSON backup.'],
+  ['Rollback script', 'Each change appends its own undo step to Rollback_*.ps1.'],
+  ['Verify after apply', 'Each fix is read back to confirm it took effect.'],
+  ['Idempotent', 'A fix that is already in place changes nothing and adds no rollback step.'],
+  [
+    'Admin-owned data',
+    'Everything that runs elevated lives in a folder only Administrators and SYSTEM can write. A folder that fails the ownership check is moved aside, never trusted and never deleted.',
+  ],
+  [
+    'Verified downloads',
+    'Hayabusa and Chainsaw must match a pinned or GitHub-published SHA-256; Autoruns and Sysmon must carry a valid MS signature. The checks run again before every run.',
+  ],
+];
+
+const tiers = [
+  {
+    key: 'safe',
+    name: 'Safe',
+    n: 15,
+    text: 'Widely recommended, low risk. Applied by Apply Recommended Fixes.',
+    ids: 'DEF-RTP, FW-Public, UAC-ENABLE, WDIGEST',
+  },
+  {
+    key: 'elevated',
+    name: 'Elevated',
+    n: 8,
+    text: 'Standard hardening that may affect some setups. Listed separately in the confirmation.',
+    ids: 'SMB1, LLMNR, DEF-ASR, SMB-SIGN',
+  },
+  {
+    key: 'high',
+    name: 'High-risk',
+    n: 4,
+    text: 'Can break things. Hidden unless you tick Include high-risk fixes.',
+    ids: 'HVCI, LSA-PPL, RDP-ENABLED, SYSMON',
+  },
+  {
+    key: 'audit',
+    name: 'Audit-only',
+    n: 6,
+    text: 'Reported, never changed by the tool.',
+    ids: 'Secure Boot, TPM, BitLocker, Tamper Protection, Credential Guard, patch age',
+  },
 ];
 ---
 
@@ -21,68 +101,131 @@ const features = [
   description="Win11-Security-Optimizer: a free, open-source Windows 11 hardening, debloat and compromise-triage tool where every change is backed up and reversible."
 >
   <div class="container">
-    <header class="page-head">
-      <p class="crumbs"><a href="/">~</a>/tools</p>
-      <h1><Decrypt text="Tools" /></h1>
+    <header class="phead">
+      <ol class="crumbs">
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">Tools</li>
+      </ol>
+      <h1>Tools</h1>
       <p class="lede">Software I build and maintain in the open. MIT licensed unless stated.</p>
     </header>
 
-    <section class="split" aria-labelledby="w11-title">
-      <div class="panel hud card" data-reveal>
-        <p class="card-label">github.com/SecureSagaciousGenie</p>
-        <h2 id="w11-title" style="font-size: var(--step-3)">Win11-Security-Optimizer</h2>
-        <div style="margin-top: 1rem"><Status status="Shipped" label="Shipped, active development" /></div>
-        <p>
-          A Windows 11 security tool with a GUI for people who own the machine but do not live in PowerShell. It runs
-          from a batch file on the PowerShell 5.1 that ships with Windows, so there is no installer and no unsigned binary
-          for SmartScreen to quarantine.
+    <section class="tool-hero doc-after" aria-labelledby="w11-title">
+      <div>
+        <p class="eyebrow"><span class="eyebrow-mark"></span>Windows 11 · PowerShell 5.1</p>
+        <h2 class="subhead" id="w11-title">Win11-Security-Optimizer</h2>
+        <div class="meta-row" style="margin: 0 0 1.5rem">
+          <Status status="Shipped" label="Shipped, v1.2.0" />
+          <span>12 Oct 2026</span>
+          <span>MIT</span>
+        </div>
+        <p class="lead-p">
+          A Windows 11 security tool with a GUI for people who own the machine but do not live in PowerShell. It runs from
+          a batch file on the PowerShell 5.1 that ships with Windows, so there is no installer and no unsigned binary for
+          SmartScreen to quarantine.
         </p>
         <p>
-          Nothing changes without a tick and a confirmation, and everything that changes can be undone. Each fix is
-          re-read after it is applied to confirm it took effect.
+          Nothing changes without a tick and a confirmation, and everything that changes can be undone. Each fix is re-read
+          after it is applied to confirm it took effect. The core tool needs no internet connection and sends nothing to
+          the project.
         </p>
         <div class="hero-actions">
-          <a class="btn btn-primary" href={repo} target="_blank" rel="noopener">View source</a>
+          <a class="btn btn-primary" href={repo} rel="noopener">View source<Icon name="arrow" /></a>
           <a class="btn btn-ghost" href="/writing/building-a-reversible-windows-hardening-tool/">Read the design notes</a>
         </div>
       </div>
-
-      <div class="panel terminal" data-reveal style="--reveal-delay: 0.1s">
-        <div class="codeblock-bar">
-          <span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>Windows PowerShell 5.1</span>
-          <span>elevated</span>
-        </div>
-        <div class="terminal-body" aria-label="Example session showing how each change is protected">
-          <p class="terminal-line"><span class="p">PS&gt;</span> .\Start.bat</p>
-          <p class="terminal-line"><span class="out">[scan] read-only audit complete, 0 changes made</span></p>
-          <p class="terminal-line"><span class="out">[user] ticked: disable SMBv1 (Elevated)</span></p>
-          <p class="terminal-line"><span class="out">[+] System Restore point created</span></p>
-          <p class="terminal-line"><span class="out">[+] before-state written to Backup_*.json</span></p>
-          <p class="terminal-line"><span class="out">[+] undo step appended to Rollback_*.ps1</span></p>
-          <p class="terminal-line"><span class="p">[ok]</span> verified after apply: SMBv1 disabled</p>
-        </div>
-      </div>
+      <ChangeRecord />
     </section>
+  </div>
 
-    <section class="section" aria-labelledby="tabs-title">
-      <div class="section-head" data-reveal>
-        <div>
-          <p class="kicker">ls ./tabs</p>
-          <h2 id="tabs-title">What it does</h2>
-        </div>
-        <p>Six tabs. Scans are read-only; changes are tiered by risk and every one is backed up first.</p>
-      </div>
-      <div class="grid-cards">
+  <section class="section section-band" aria-labelledby="does-title">
+    <div class="container">
+      <SectionHead id="does-title" eyebrow="Features" title="What it does">
+        <p>One window. Scans are read-only, and changes are tiered by risk and backed up before they apply.</p>
+      </SectionHead>
+      <div class="groups">
         {
-          features.map(([name, text], i) => (
-            <article class="panel card" data-reveal style={`--reveal-delay:${i * 0.06}s`}>
-              <p class="card-label">tab_{String(i + 1).padStart(2, '0')}</p>
-              <h3>{name}</h3>
-              <p>{text}</p>
+          groups.map((g) => (
+            <article class="group">
+              <h3>
+                <Icon name={g.icon} />
+                {g.name}
+              </h3>
+              <ul>
+                {g.points.map((p) => (
+                  <li>{p}</li>
+                ))}
+              </ul>
             </article>
           ))
         }
       </div>
-    </section>
-  </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="rules-title">
+    <div class="container">
+      <SectionHead id="rules-title" eyebrow="Safety model" title="How every change is protected">
+        <p>The rules every fix and every contribution follows, in the order a change meets them.</p>
+      </SectionHead>
+      <ol class="rules">
+        {
+          rules.map(([title, text]) => (
+            <li class="reveal">
+              <p>
+                <b>{title}</b>
+                <span>{text}</span>
+              </p>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </section>
+
+  <section class="section section-band" aria-labelledby="tiers-title">
+    <div class="container">
+      <SectionHead id="tiers-title" eyebrow="Risk tiers" title="What a fix costs, before you apply it">
+        <p>
+          Apply Recommended Fixes applies Safe and Elevated items, and High-risk ones only when ticked. Its confirmation
+          groups every pending change by tier, so the disruptive ones are visible as such.
+        </p>
+      </SectionHead>
+      <div class="tiers">
+        {
+          tiers.map((t) => (
+            <article class="tier" data-tier={t.key}>
+              <p class="tier-name">{t.name}</p>
+              <p class="tier-n">{t.n}</p>
+              <p>{t.text}</p>
+              <p>
+                <code>{t.ids}</code>
+              </p>
+            </article>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="test-title">
+    <div class="container split-2">
+      <div>
+        <p class="eyebrow"><span class="eyebrow-mark"></span>Testing</p>
+        <h2 class="subhead" id="test-title">Tested on a real Windows runner</h2>
+      </div>
+      <div class="prose">
+        <p>
+          CI runs 216 Pester tests and a PSScriptAnalyzer gate on Windows PowerShell 5.1. A separate integration workflow
+          applies real fixes, downloads and rollbacks on an elevated Windows runner, and the self-test clicks through every
+          user action, including Run Full Scan, Deep Scan, the Debloat presets, the evidence pack and all three Pro Tools.
+        </p>
+        <p>
+          Releases are built by a workflow from the tagged commit, with a zip and <code>SHA256SUMS.txt</code> to check before
+          extracting. The headless self-test runs the same way on any machine:
+        </p>
+        <pre><code>powershell -NoProfile -ExecutionPolicy Bypass -STA -File .\src\Optimizer.ps1 -SelfTest</code></pre>
+      </div>
+    </div>
+  </section>
 </Base>

@@ -1,0 +1,46 @@
+---
+// Author: Ahmad Shaukat
+// Case files as a ledger: one row per case, with its status in assessment language.
+import Status from './Status.astro';
+import Icon from './Icon.astro';
+import type { CollectionEntry } from 'astro:content';
+
+interface Props {
+  items: CollectionEntry<'work'>[];
+}
+
+const { items } = Astro.props;
+const pad = (n: number) => String(n).padStart(2, '0');
+---
+
+<ol class="ledger">
+  {
+    items.map((item, i) => (
+      <li class="ledger-row reveal">
+        <a class="ledger-link" href={`/work/${item.id}/`} data-glow>
+          <span class="ledger-id">CF-{pad(i + 1)}</span>
+          <span>
+            <span class="ledger-title">{item.data.title}</span>
+            <span class="ledger-claim">{item.data.claim}</span>
+            <span class="chips">
+              {item.data.frameworks.slice(0, 4).map((f) => (
+                <span class="chip">{f}</span>
+              ))}
+            </span>
+          </span>
+          <span class="ledger-meta">
+            <Status status={item.data.status} />
+            <span class="ledger-when">
+              {item.data.setting}
+              <br />
+              {item.data.period}
+            </span>
+          </span>
+          <span class="ledger-go" aria-hidden="true">
+            <Icon name="arrow" />
+          </span>
+        </a>
+      </li>
+    ))
+  }
+</ol>

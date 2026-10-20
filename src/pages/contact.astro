@@ -1,50 +1,57 @@
 ---
 // Author: Ahmad Shaukat
 import Base from '../layouts/Base.astro';
-import Decrypt from '../components/Decrypt.astro';
+import Icon from '../components/Icon.astro';
 import { site } from '../site.config';
 ---
 
 <Base title="Contact" description="How to reach Ahmad Shaukat.">
   <div class="container">
-    <header class="page-head">
-      <p class="crumbs"><a href="/">~</a>/contact</p>
-      <h1><Decrypt text="Contact" /></h1>
+    <header class="phead">
+      <ol class="crumbs">
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">Contact</li>
+      </ol>
+      <h1>Contact</h1>
       <p class="lede">LinkedIn is the fastest way to reach me. I work with US clients, remotely.</p>
     </header>
 
-    <div class="panel hud terminal" data-reveal style="max-width: 760px">
-      <div class="codeblock-bar">
-        <span><span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>contact.sh</span>
-        <span>secure channel</span>
-      </div>
-      <div class="terminal-body">
-        <p class="terminal-line">
-          <span class="p">$</span> contact --linkedin<br />
-          <a href={site.linkedin} target="_blank" rel="me noopener">linkedin.com/in/ahmadshkt</a>
-          <span class="out">Messages and connection requests. Mention what you are working on.</span>
-        </p>
-        <p class="terminal-line">
-          <span class="p">$</span> contact --github<br />
-          <a href={site.github} target="_blank" rel="me noopener">github.com/SecureSagaciousGenie</a>
-          <span class="out">Issues and pull requests on my open-source tools.</span>
-        </p>
-        {
-          site.email && (
-            <p class="terminal-line">
-              <span class="p">$</span> contact --email
-              <br />
-              <a href={`mailto:${site.email}`}>{site.email}</a>
-              <span class="out">Email for anything longer.</span>
-            </p>
-          )
-        }
-        <p class="terminal-line">
-          <span class="p">$</span> cat /.well-known/security.txt<br />
-          <a href="/.well-known/security.txt" data-astro-reload>security.txt</a>
-          <span class="out">To report a security issue with this site or my tools.</span>
-        </p>
-      </div>
+    <div class="channels doc-after">
+      <a class="channel" href={site.linkedin} rel="me noopener" data-glow>
+        <span class="channel-k">LinkedIn</span>
+        <span class="channel-v">linkedin.com/in/ahmadshkt</span>
+        <p>Messages and connection requests. Mention what you are working on.</p>
+        <span class="arrow-link">Open LinkedIn<Icon name="arrow" /></span>
+      </a>
+      <a class="channel" href={site.github} rel="me noopener" data-glow>
+        <span class="channel-k">GitHub</span>
+        <span class="channel-v">SecureSagaciousGenie</span>
+        <p>Issues and pull requests on my open-source tools.</p>
+        <span class="arrow-link">Open GitHub<Icon name="arrow" /></span>
+      </a>
+      {
+        site.email ? (
+          <a class="channel" href={`mailto:${site.email}`} data-glow>
+            <span class="channel-k">Email</span>
+            <span class="channel-v">{site.email}</span>
+            <p>For anything longer.</p>
+            <span class="arrow-link">
+              Write an email
+              <Icon name="arrow" />
+            </span>
+          </a>
+        ) : (
+          <a class="channel" href="/.well-known/security.txt" data-glow>
+            <span class="channel-k">Security contact</span>
+            <span class="channel-v">security.txt</span>
+            <p>To report a security issue with this site or my tools, per RFC 9116.</p>
+            <span class="arrow-link">
+              Read security.txt
+              <Icon name="arrow" />
+            </span>
+          </a>
+        )
+      }
     </div>
   </div>
 </Base>

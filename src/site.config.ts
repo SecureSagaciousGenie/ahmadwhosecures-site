@@ -11,6 +11,7 @@ export const site = {
     'Ahmad Shaukat builds security and compliance programs for US defense contractors: CMMC, NIST SP 800-171 and ISO 27001, plus detection and response and the migrations underneath them.',
   linkedin: 'https://www.linkedin.com/in/ahmadshkt/',
   github: 'https://github.com/SecureSagaciousGenie',
+  source: 'https://github.com/SecureSagaciousGenie/ahmadwhosecures-site',
   // Leave empty to hide the email link everywhere. Set it to the address you want public.
   email: '',
 };

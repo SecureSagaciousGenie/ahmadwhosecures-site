@@ -1,0 +1,38 @@
+---
+// Author: Ahmad Shaukat
+// The order every fix in Win11-Security-Optimizer follows, shown as a session log.
+import Icon from './Icon.astro';
+
+const lines = [
+  ['scan', 'Read-only audit complete. 0 changes made.'],
+  ['select', 'Ticked: disable SMBv1 (Elevated tier). Confirmed.'],
+  ['restore', 'System Restore point created before the first change'],
+  ['backup', 'Previous state written to Backup_*.json'],
+  ['rollback', 'Undo step appended to Rollback_*.ps1'],
+  ['apply', 'SMB1Protocol optional feature disabled'],
+  ['verify', 'Read back after apply: SMBv1 is off'],
+];
+---
+
+<figure class="record">
+  <div class="record-bar">
+    <Icon name="terminal" class="record-icon" />
+    <span>Win11-Security-Optimizer</span>
+    <span class="record-tag">Session log, example</span>
+    <span class="record-win" aria-hidden="true"><i></i><i></i><i></i></span>
+  </div>
+  <ol class="record-log">
+    {
+      lines.map(([k, v]) => (
+        <li data-k={k} class="reveal">
+          <span class="rk">{k}</span>
+          <span class="rv">{v}</span>
+        </li>
+      ))
+    }
+  </ol>
+  <figcaption>
+    Every fix follows this order. Scans only read, nothing changes without a tick and a confirmation, and the rollback
+    script lives in a folder only Administrators and SYSTEM can write to.
+  </figcaption>
+</figure>

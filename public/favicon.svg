@@ -1,5 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="6" fill="#070d16"/>
-  <polygon points="16,3 27,9.5 27,22.5 16,29 5,22.5 5,9.5" fill="#0f1b2b" stroke="#4cd6ff" stroke-width="1.6"/>
-  <text x="16" y="20" text-anchor="middle" font-family="system-ui, Segoe UI, sans-serif" font-weight="700" font-size="10" fill="#e6eef8">AS</text>
+  <!-- Author: Ahmad Shaukat. A page of evidence, corner folded, ticked. -->
+  <path d="M5 2h15l7 7v21H5z" fill="#f2b33d"/>
+  <path d="M20 2v7h7z" fill="#b37a14"/>
+  <path d="M10.5 17.5l4 4 7.5-8" fill="none" stroke="#1b1405" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>

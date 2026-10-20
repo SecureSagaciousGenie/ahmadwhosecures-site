@@ -2,7 +2,6 @@
 // Author: Ahmad Shaukat
 import Base from '../../layouts/Base.astro';
 import EntryList from '../../components/EntryList.astro';
-import Decrypt from '../../components/Decrypt.astro';
 import { getCollection } from 'astro:content';
 import { byNewest } from '../../lib/sort';
 
@@ -14,14 +13,19 @@ const writing = (await getCollection('writing', ({ data }) => !data.draft)).sort
   description="Field notes on MS 365 migration, Conditional Access, Wazuh, DFIR triage and building reversible Windows hardening tools."
 >
   <div class="container">
-    <header class="page-head">
-      <p class="crumbs"><a href="/">~</a>/writing</p>
-      <h1><Decrypt text="Field notes" /></h1>
+    <header class="phead">
+      <ol class="crumbs">
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">Field notes</li>
+      </ol>
+      <h1>Field notes</h1>
       <p class="lede">
         Write-ups from production work, rewritten so the lesson travels and the client detail does not. Commands and
         configuration are from lab builds unless stated.
       </p>
     </header>
-    <EntryList items={writing} />
+    <div class="doc-after">
+      <EntryList items={writing} />
+    </div>
   </div>
 </Base>

@@ -1,0 +1,30 @@
+---
+// Author: Ahmad Shaukat
+// "Ahmad who Secures" and "Ahmad Shaukat" share the capital S. The six letters after it flip
+// one by one like a split-flap board, and "who" opens and closes. Click to switch by hand.
+// Screen readers get the name only.
+const handle = 'ecures';
+const name = 'haukat';
+const slots = [...handle].map((a, k) => ({ a, b: name[k], k }));
+---
+
+<h1 class="hero-name" id="hero-title">
+  <span class="sr-only">Ahmad Shaukat</span>
+  <span class="hn" aria-hidden="true" title="Ahmad Shaukat" data-morph data-state="handle">
+    <span class="hn-line">Ahmad<span class="hn-who"><span> who</span></span></span>
+    <span class="hn-line hn-line-2"
+      ><span class="hn-s">S</span>{
+        slots.map((s) =>
+          s.a === s.b ? (
+            <span class="hn-s">{s.a}</span>
+          ) : (
+            <span class="fl" style={`--k:${s.k}`}>
+              <span class="fl-a">{s.a}</span>
+              <span class="fl-b">{s.b}</span>
+            </span>
+          ),
+        )
+      }</span
+    >
+  </span>
+</h1>

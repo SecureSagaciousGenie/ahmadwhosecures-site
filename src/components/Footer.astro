@@ -1,0 +1,67 @@
+---
+// Author: Ahmad Shaukat
+// Footer with a document-control block, the way a controlled document carries its own metadata.
+import { site, nav } from '../site.config';
+
+interface Props {
+  built: Date;
+}
+
+const { built } = Astro.props;
+const builtIso = built.toISOString().slice(0, 10);
+const builtLabel = built.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+---
+
+<footer class="ftr">
+  <div class="container">
+    <div class="ftr-grid">
+      <div>
+        <p class="ftr-name">{site.name}</p>
+        <p class="ftr-role">{site.role}. {site.location}.</p>
+      </div>
+
+      <nav class="ftr-nav" aria-label="Footer">
+        <ul>
+          <li><a href="/">Home</a></li>
+          {
+            nav.map((item) => (
+              <li>
+                <a href={item.href}>{item.label}</a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      <div class="ftr-doc">
+        <p class="ftr-doc-title">Document control</p>
+        <dl>
+          <div><dt>Owner</dt><dd>{site.name}</dd></div>
+          <div><dt>Classification</dt><dd>Public</dd></div>
+          <div><dt>Last built</dt><dd><time datetime={builtIso}>{builtLabel}</time></dd></div>
+          <div>
+            <dt>Source</dt>
+            <dd><a href={site.source} rel="noopener">ahmadwhosecures-site</a></dd>
+          </div>
+        </dl>
+      </div>
+    </div>
+
+    <div class="ftr-base">
+      <p>&copy; {built.getUTCFullYear()} {site.name}</p>
+      <ul>
+        <li><a href={site.linkedin} rel="me noopener">LinkedIn</a></li>
+        <li><a href={site.github} rel="me noopener">GitHub</a></li>
+        {
+          site.email && (
+            <li>
+              <a href={`mailto:${site.email}`}>Email</a>
+            </li>
+          )
+        }
+        <li><a href="/rss.xml">RSS</a></li>
+        <li><a href="/.well-known/security.txt">security.txt</a></li>
+      </ul>
+    </div>
+  </div>
+</footer>

@@ -1,33 +1,35 @@
 ---
 // Author: Ahmad Shaukat
-// Field notes rendered as a log feed.
+// Field notes as a dated list.
 import type { CollectionEntry } from 'astro:content';
 
 interface Props {
   items: CollectionEntry<'writing'>[];
 }
+
 const { items } = Astro.props;
 const iso = (d: Date) => d.toISOString().slice(0, 10);
-const tag = (t: string) => '#' + t.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+const label = (d: Date) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', timeZone: 'UTC' });
+const minutes = (body = '') => Math.max(1, Math.round(body.split(/\s+/).filter(Boolean).length / 220));
 ---
 
-<ol class="feed">
+<ol class="notes">
   {
-    items.map((item, i) => (
-      <li class="feed-item" data-reveal style={`--reveal-delay:${i * 0.06}s`}>
-        <div class="feed-time">
-          <time datetime={iso(item.data.date)}>[{iso(item.data.date)}]</time>
-          <span class="tag">{tag(item.data.topics[0])}</span>
-        </div>
-        <div>
-          <h3>
-            <a href={`/writing/${item.id}/`}>{item.data.title}</a>
-          </h3>
-          <p>{item.data.description}</p>
-        </div>
-        <span class="feed-go" aria-hidden="true">
-          read &gt;
-        </span>
+    items.map((item) => (
+      <li class="note-row reveal">
+        <a class="note-link" href={`/writing/${item.id}/`} data-glow>
+          <time class="note-date" datetime={iso(item.data.date)}>
+            {label(item.data.date)}
+          </time>
+          <span>
+            <span class="note-title">{item.data.title}</span>
+            <span class="note-desc">{item.data.description}</span>
+          </span>
+          <span class="note-side">
+            <span class="note-topic">{item.data.topics[0]}</span>
+            <span class="note-time">{minutes(item.body)} min read</span>
+          </span>
+        </a>
       </li>
     ))
   }

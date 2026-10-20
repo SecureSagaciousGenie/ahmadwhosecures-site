@@ -1,684 +1,394 @@
 // Author: Ahmad Shaukat
-// Client behaviour for ahmadwhosecures.is-a.dev. Loaded once; page-level parts re-run on
-// every client-side navigation via astro:page-load. Everything respects reduced motion.
-import { initThreatMap } from './threatmap';
+// Client behaviour for the whole site. Each feature looks for its own markup and returns if it
+// is absent, and every page stays usable with this script blocked: content, navigation and the
+// evidence trail all work without it.
+import { evaluate, type Scenario } from '../lib/signin';
+import { renderResult, summarise } from '../lib/signin-render';
 
-const reduced = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-const qs = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) =>
-  root.querySelector<T>(sel);
+const qs = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) => root.querySelector<T>(sel);
 const qsa = <T extends Element = HTMLElement>(sel: string, root: ParentNode = document) =>
   Array.from(root.querySelectorAll<T>(sel));
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-const pageCleanups: Array<() => void> = [];
-const onCleanup = (fn: () => void) => pageCleanups.push(fn);
-
-/* ---------------------------------------------------------------- toasts */
-
-export function toast(title: string, body = '') {
-  const host = qs('[data-toasts]');
-  if (!host) return;
-  const el = document.createElement('div');
-  el.className = 'toast';
-  const strong = document.createElement('strong');
-  strong.textContent = title;
-  el.appendChild(strong);
-  if (body) {
-    el.appendChild(document.createElement('br'));
-    el.appendChild(document.createTextNode(body));
-  }
-  host.appendChild(el);
-  setTimeout(() => {
-    el.setAttribute('data-leaving', '');
-    setTimeout(() => el.remove(), 320);
-  }, 2600);
-}
-
-/* ---------------------------------------------------------------- busy HUD */
-
-const busy = {
-  el: null as HTMLElement | null,
-  log: null as HTMLElement | null,
-  title: null as HTMLElement | null,
-  shownAt: 0,
-  hideTimer: 0 as number | ReturnType<typeof setTimeout>,
-  init() {
-    this.el = qs('[data-busy]');
-    this.log = qs('[data-busy-log]');
-    this.title = qs('[data-busy-title]');
-  },
-  start(title: string, first: string) {
-    if (!this.el || !this.log || !this.title) return;
-    clearTimeout(this.hideTimer as number);
-    this.log.textContent = '';
-    this.title.textContent = title;
-    this.el.removeAttribute('data-state');
-    this.el.setAttribute('data-show', '');
-    this.shownAt = performance.now();
-    this.line(first);
-  },
-  line(text: string, ok = false) {
-    if (!this.log) return;
-    const li = document.createElement('li');
-    li.textContent = '> ' + text + ' ';
-    if (ok) {
-      const s = document.createElement('span');
-      s.className = 'ok';
-      s.textContent = '[ok]';
-      li.appendChild(s);
-    }
-    this.log.appendChild(li);
-    while (this.log.children.length > 3) this.log.firstElementChild?.remove();
-  },
-  async done(text: string) {
-    if (!this.el || !this.title) return;
-    this.line(text, true);
-    this.title.textContent = 'LINK SECURE';
-    this.el.setAttribute('data-state', 'ok');
-    const visibleFor = performance.now() - this.shownAt;
-    const hold = Math.max(500, 900 - visibleFor);
-    this.hideTimer = setTimeout(() => this.el?.removeAttribute('data-show'), hold);
-  },
+/** Run a handler at most once per animation frame. */
+const perFrame = (fn: () => void) => {
+  let queued = false;
+  return () => {
+    if (queued) return;
+    queued = true;
+    requestAnimationFrame(() => {
+      queued = false;
+      fn();
+    });
+  };
 };
 
-/* ---------------------------------------------------------------- header */
-
-let promptTimer = 0 as number | ReturnType<typeof setInterval>;
-
-function typePrompt(path: string) {
-  const el = qs('[data-prompt-cmd]');
-  if (!el) return;
-  const target = `cd ${path}`;
-  clearInterval(promptTimer as number);
-  if (reduced()) {
-    el.textContent = target;
-    return;
-  }
-  let i = 3;
-  el.textContent = 'cd ';
-  promptTimer = setInterval(() => {
-    i++;
-    el.textContent = target.slice(0, i);
-    if (i >= target.length) clearInterval(promptTimer as number);
-  }, 28);
-}
-
-function updateNav(path: string) {
-  for (const a of qsa<HTMLAnchorElement>('[data-nav]')) {
-    const href = a.getAttribute('href') || '';
-    if (path.startsWith(href)) a.setAttribute('aria-current', 'page');
-    else a.removeAttribute('aria-current');
-  }
-}
-
-function initClock() {
-  const el = qs('[data-clock]');
-  if (!el) return;
-  const tick = () => {
-    const d = new Date();
-    const p = (n: number) => String(n).padStart(2, '0');
-    el.textContent = `${p(d.getUTCHours())}:${p(d.getUTCMinutes())}:${p(d.getUTCSeconds())} UTC`;
-  };
-  tick();
-  setInterval(tick, 1000);
-}
-
-function initMenu() {
+function initHeader() {
   const header = qs('[data-header]');
-  const btn = qs<HTMLButtonElement>('[data-menu-toggle]');
-  if (!header || !btn) return;
-  const set = (open: boolean) => {
-    if (open) header.setAttribute('data-open', '');
-    else header.removeAttribute('data-open');
-    btn.setAttribute('aria-expanded', String(open));
-    btn.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
-    document.body.style.overflow = open ? 'hidden' : '';
+  if (!header) return;
+  const update = perFrame(() => header.toggleAttribute('data-scrolled', window.scrollY > 8));
+  update();
+  window.addEventListener('scroll', update, { passive: true });
+}
+
+function initTheme() {
+  const btn = qs<HTMLButtonElement>('[data-theme-toggle]');
+  if (!btn) return;
+  const root = document.documentElement;
+  const meta = qs<HTMLMetaElement>('meta[name="theme-color"]');
+  const sync = () => {
+    const light = root.dataset.theme === 'light';
+    btn.setAttribute('aria-pressed', String(light));
+    btn.setAttribute('aria-label', light ? 'Switch to dark theme' : 'Switch to light theme');
+    meta?.setAttribute('content', light ? '#f3f5f8' : '#0a0f17');
   };
-  btn.addEventListener('click', () => set(!header.hasAttribute('data-open')));
+  btn.hidden = false;
+  sync();
+  btn.addEventListener('click', () => {
+    const next = root.dataset.theme === 'light' ? 'dark' : 'light';
+    const apply = () => {
+      if (next === 'light') root.dataset.theme = 'light';
+      else root.removeAttribute('data-theme');
+      try {
+        localStorage.setItem('aw-theme', next);
+      } catch {
+        /* storage blocked: the choice lasts for this page only */
+      }
+      sync();
+    };
+    const doc = document as Document & { startViewTransition?: (cb: () => void) => unknown };
+    if (doc.startViewTransition && !reducedMotion()) doc.startViewTransition(apply);
+    else apply();
+  });
+}
+
+function initMorph() {
+  const hn = qs('[data-morph]');
+  if (!hn) return;
+  const HOLD = 1800;
+  const FLIP = 750;
+  let state: 'handle' | 'name' = 'handle';
+  let hovering = false;
+  let visible = true;
+  let timer = 0;
+
+  const measure = () => {
+    hn.setAttribute('data-measuring', '');
+    const size = parseFloat(getComputedStyle(hn).fontSize) || 16;
+    for (const slot of qsa('.fl', hn)) {
+      const a = qs('.fl-a', slot)?.getBoundingClientRect().width ?? 0;
+      const b = qs('.fl-b', slot)?.getBoundingClientRect().width ?? 0;
+      slot.style.setProperty('--wa', `${(a / size).toFixed(4)}em`);
+      slot.style.setProperty('--wb', `${(b / size).toFixed(4)}em`);
+    }
+    const who = qs('.hn-who > span', hn)?.getBoundingClientRect().width ?? 0;
+    hn.style.setProperty('--who-w', `${(who / size).toFixed(4)}em`);
+    hn.removeAttribute('data-measuring');
+    void hn.offsetWidth;
+    hn.setAttribute('data-ready', '');
+  };
+
+  const flip = () => {
+    state = state === 'handle' ? 'name' : 'handle';
+    hn.dataset.state = state;
+  };
+
+  const schedule = () => {
+    window.clearTimeout(timer);
+    if (reducedMotion()) return;
+    timer = window.setTimeout(() => {
+      if (!hovering && visible && !document.hidden) flip();
+      schedule();
+    }, HOLD + FLIP);
+  };
+
+  hn.addEventListener('click', () => {
+    flip();
+    schedule();
+  });
+  hn.addEventListener('pointerenter', () => (hovering = true));
+  hn.addEventListener('pointerleave', () => (hovering = false));
+  new IntersectionObserver(([entry]) => (visible = entry.isIntersecting)).observe(hn);
+
+  const start = () => {
+    measure();
+    schedule();
+  };
+  if (document.fonts?.ready) document.fonts.ready.then(start, start);
+  else start();
+}
+
+function initTrail() {
+  const trail = qs('[data-trail]');
+  if (!trail || reducedMotion()) return;
+  const radios = qsa<HTMLInputElement>('input[name="trail-req"]', trail);
+  if (radios.length < 2) return;
+
+  // A timer owns the timing; the progress bar in CSS only shows it. Both pause together
+  // through data-paused, so the bar never runs ahead of the switch or behind it.
+  const DWELL = 7000;
+  let remaining = DWELL;
+  let startedAt = 0;
+  let timer = 0;
+  const holds = { hover: false, focus: false, offscreen: false, hidden: document.hidden };
+
+  const advance = () => {
+    const i = radios.findIndex((r) => r.checked);
+    radios[(i + 1) % radios.length].checked = true;
+    remaining = DWELL;
+    run();
+  };
+  const run = () => {
+    window.clearTimeout(timer);
+    startedAt = performance.now();
+    timer = window.setTimeout(advance, remaining);
+  };
+  const sync = () => {
+    if (trail.dataset.autoplay !== 'on') return;
+    const paused = Object.values(holds).some(Boolean);
+    const was = trail.hasAttribute('data-paused');
+    trail.toggleAttribute('data-paused', paused);
+    if (paused && !was) {
+      window.clearTimeout(timer);
+      remaining = Math.max(0, remaining - (performance.now() - startedAt));
+    } else if (!paused && was) run();
+  };
+
+  trail.style.setProperty('--dwell', `${DWELL}ms`);
+  trail.dataset.autoplay = 'on';
+  run();
+  sync();
+
+  // A choice made by the visitor ends autoplay; programmatic changes fire no event.
+  for (const r of radios) {
+    r.addEventListener('change', () => {
+      trail.dataset.autoplay = 'off';
+      trail.removeAttribute('data-paused');
+      window.clearTimeout(timer);
+    });
+  }
+  const hold = (key: keyof typeof holds, on: boolean) => {
+    holds[key] = on;
+    sync();
+  };
+  trail.addEventListener('pointerenter', () => hold('hover', true));
+  trail.addEventListener('pointerleave', () => hold('hover', false));
+  trail.addEventListener('focusin', () => hold('focus', true));
+  trail.addEventListener('focusout', (e) => {
+    if (!trail.contains(e.relatedTarget as Node | null)) hold('focus', false);
+  });
+  new IntersectionObserver(([entry]) => hold('offscreen', !entry.isIntersecting)).observe(trail);
+  document.addEventListener('visibilitychange', () => hold('hidden', document.hidden));
+}
+
+function initSim() {
+  const sim = qs('[data-sim]');
+  const out = sim && qs('[data-sim-out]', sim);
+  const live = sim && qs('[data-sim-live]', sim);
+  if (!sim || !out) return;
+  const value = (name: string) => qs<HTMLInputElement>(`input[name="sim-${name}"]:checked`, sim)?.value ?? '';
+
+  sim.addEventListener('change', () => {
+    const scenario = {
+      person: value('person'),
+      place: value('place'),
+      device: value('device'),
+      app: value('app'),
+      risk: value('risk'),
+      mode: value('mode'),
+    } as Scenario;
+    const keepOpen = qs<HTMLDetailsElement>('details', out)?.open ?? false;
+    const result = evaluate(scenario);
+    out.innerHTML = renderResult(result);
+    if (keepOpen) qs<HTMLDetailsElement>('details', out)?.setAttribute('open', '');
+    if (live) live.textContent = summarise(result);
+  });
+}
+
+function initPalette() {
+  const dialog = qs<HTMLDialogElement>('[data-palette]');
+  const openBtn = qs<HTMLButtonElement>('[data-palette-open]');
+  if (!dialog || !openBtn || typeof dialog.showModal !== 'function') return;
+  const input = qs<HTMLInputElement>('[data-palette-input]', dialog);
+  const empty = qs('[data-palette-empty]', dialog);
+  const items = qsa<HTMLAnchorElement>('[data-palette-item]', dialog);
+  if (!input || !empty) return;
+
+  if (/Mac|iPhone|iPad/.test(navigator.platform)) {
+    const kbd = qs('[data-palette-kbd]', openBtn);
+    if (kbd) kbd.textContent = '⌘ K';
+  }
+  openBtn.hidden = false;
+
+  let shown = items;
+  let active = 0;
+
+  const paint = () => {
+    for (const a of items) a.removeAttribute('data-active');
+    const current = shown[active];
+    if (current) {
+      current.setAttribute('data-active', '');
+      current.setAttribute('aria-selected', 'true');
+      current.scrollIntoView({ block: 'nearest' });
+      input.setAttribute('aria-activedescendant', current.id);
+    } else input.removeAttribute('aria-activedescendant');
+    for (const a of items) if (a !== current) a.removeAttribute('aria-selected');
+  };
+
+  const filter = () => {
+    const terms = input.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    shown = [];
+    for (const a of items) {
+      const text = a.dataset.text ?? '';
+      const match = terms.every((t) => text.includes(t));
+      (a.parentElement as HTMLElement).hidden = !match;
+      if (match) shown.push(a);
+    }
+    empty.hidden = shown.length > 0;
+    active = 0;
+    paint();
+  };
+
+  const open = () => {
+    input.value = '';
+    filter();
+    dialog.showModal();
+    input.focus();
+  };
+
+  const typing = (t: EventTarget | null) =>
+    t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName));
+
+  openBtn.addEventListener('click', open);
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && header.hasAttribute('data-open')) {
-      set(false);
-      btn.focus();
+    if (e.key.toLowerCase() === 'k' && (e.ctrlKey || e.metaKey)) {
+      e.preventDefault();
+      if (dialog.open) dialog.close();
+      else open();
+    } else if (e.key === '/' && !dialog.open && !typing(e.target)) {
+      e.preventDefault();
+      open();
     }
   });
-  document.addEventListener('astro:before-preparation', () => set(false));
-  window.matchMedia('(min-width: 861px)').addEventListener('change', (m) => m.matches && set(false));
+  input.addEventListener('input', filter);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      active = Math.min(active + 1, shown.length - 1);
+      paint();
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      active = Math.max(active - 1, 0);
+      paint();
+    } else if (e.key === 'Enter' && shown[active]) {
+      e.preventDefault();
+      window.location.href = shown[active].href;
+    }
+  });
+  for (const a of items) {
+    a.addEventListener('pointermove', () => {
+      const i = shown.indexOf(a);
+      if (i >= 0 && i !== active) {
+        active = i;
+        paint();
+      }
+    });
+  }
+  // A click on the backdrop lands on the dialog element itself.
+  dialog.addEventListener('click', (e) => {
+    if (e.target === dialog) dialog.close();
+  });
 }
 
-/* ---------------------------------------------------------------- ambient */
-
-function initSpotlight() {
-  if (!window.matchMedia('(pointer: fine)').matches) return;
-  const bg = qs('.backdrop');
-  if (!bg) return;
-  let raf = 0;
-  let x = 0;
-  let y = 0;
-  window.addEventListener(
+function initGlow() {
+  document.addEventListener(
     'pointermove',
     (e) => {
-      x = e.clientX;
-      y = e.clientY;
-      if (raf) return;
-      raf = requestAnimationFrame(() => {
-        raf = 0;
-        bg.style.setProperty('--spot-x', `${x}px`);
-        bg.style.setProperty('--spot-y', `${y}px`);
-      });
+      const el = (e.target as Element | null)?.closest?.<HTMLElement>('[data-glow]');
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      el.style.setProperty('--mx', `${e.clientX - r.left}px`);
+      el.style.setProperty('--my', `${e.clientY - r.top}px`);
     },
     { passive: true },
   );
 }
 
-function initClickPulse() {
-  document.addEventListener('click', (e) => {
-    if (reduced()) return;
-    const a = (e.target as Element | null)?.closest('a, button');
-    if (!a) return;
-    const dot = document.createElement('span');
-    dot.className = 'click-pulse';
-    dot.style.left = `${e.clientX}px`;
-    dot.style.top = `${e.clientY}px`;
-    document.body.appendChild(dot);
-    dot.addEventListener('animationend', () => dot.remove());
-    setTimeout(() => dot.remove(), 900);
-  });
-}
-
-function initOutbound() {
-  document.addEventListener('click', (e) => {
-    const a = (e.target as Element | null)?.closest<HTMLAnchorElement>('a[href]');
-    if (!a) return;
-    let url: URL;
-    try {
-      url = new URL(a.href, location.href);
-    } catch {
-      return;
-    }
-    if (url.protocol === 'mailto:') {
-      toast('Opening mail client', url.pathname);
-      return;
-    }
-    if (url.origin === location.origin) return;
-    toast(`Outbound connection: ${url.hostname}`, 'Opened in a new tab over HTTPS.');
-  });
-}
-
-/* ---------------------------------------------------------------- boot */
-
-const BOOT_LINES: Array<[string, 'ok' | 'warn' | '']> = [
-  ['initialising secure session', 'ok'],
-  ['loading case files', 'ok'],
-  ['verifying TLS 1.3 handshake', 'ok'],
-  ['policy: content-security-policy strict', 'ok'],
-  ['threat surface monitor online', 'ok'],
-  ['welcome, visitor', ''],
-];
-
-async function runBoot() {
-  const html = document.documentElement;
-  if (!html.hasAttribute('data-boot')) return;
-  const overlay = qs('[data-boot-overlay]');
-  const log = qs('[data-boot-log]');
-  if (!overlay || !log) return;
-  let skipped = false;
-  const finish = () => {
-    if (skipped) return;
-    skipped = true;
-    overlay.setAttribute('data-done', '');
-    try {
-      sessionStorage.setItem('aw-booted', '1');
-    } catch {
-      /* ignore */
-    }
-    setTimeout(() => {
-      html.removeAttribute('data-boot');
-      overlay.removeAttribute('data-done');
-    }, 550);
-    window.removeEventListener('keydown', finish);
-    window.removeEventListener('pointerdown', finish);
-  };
-  window.addEventListener('keydown', finish);
-  window.addEventListener('pointerdown', finish);
-  for (const [text, state] of BOOT_LINES) {
-    if (skipped) return;
-    const li = document.createElement('li');
-    li.textContent = `[ ${(performance.now() / 1000).toFixed(3)} ] ${text} `;
-    if (state) {
-      const s = document.createElement('span');
-      s.className = state;
-      s.textContent = state === 'ok' ? '[ok]' : '[!]';
-      li.appendChild(s);
-    }
-    log.appendChild(li);
-    await sleep(170);
-  }
-  await sleep(260);
-  finish();
-}
-
-/* ---------------------------------------------------------------- page-level */
-
-const GLYPHS = '!<>-_\\/[]{}=+*^?#01ABCDEFX$%&';
-
-function decrypt(el: HTMLElement, delay = 0) {
-  const final = el.dataset.text ?? el.textContent ?? '';
-  if (reduced()) {
-    el.textContent = final;
-    return;
-  }
-  const dur = Math.min(950, 350 + final.length * 22);
-  setTimeout(() => {
-    const start = performance.now();
-    el.setAttribute('data-scrambling', '');
-    const frame = (now: number) => {
-      const t = Math.min(1, (now - start) / dur);
-      const shown = Math.floor(t * final.length);
-      let out = '';
-      for (let i = 0; i < final.length; i++) {
-        const ch = final[i];
-        out += i < shown || ch === ' ' ? ch : GLYPHS[(Math.random() * GLYPHS.length) | 0];
-      }
-      el.textContent = out;
-      if (t < 1) requestAnimationFrame(frame);
-      else {
-        el.textContent = final;
-        el.removeAttribute('data-scrambling');
-      }
-    };
-    requestAnimationFrame(frame);
-  }, delay);
-}
-
-function initDecrypt() {
-  const items = qsa('[data-decrypt]');
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (!e.isIntersecting) continue;
-        io.unobserve(e.target);
-        const idx = items.indexOf(e.target as HTMLElement);
-        decrypt(e.target as HTMLElement, idx < 3 ? idx * 140 : 0);
-      }
-    },
-    { threshold: 0.4 },
-  );
-  items.forEach((el) => io.observe(el));
-  onCleanup(() => io.disconnect());
-}
-
-function initReveal() {
-  const items = qsa('[data-reveal]');
-  if (reduced()) {
-    items.forEach((el) => el.setAttribute('data-revealed', ''));
-    return;
-  }
-  const io = new IntersectionObserver(
-    (entries) => {
-      for (const e of entries) {
-        if (e.isIntersecting) {
-          e.target.setAttribute('data-revealed', '');
-          io.unobserve(e.target);
-        }
-      }
-    },
-    { rootMargin: '0px 0px -8% 0px', threshold: 0.08 },
-  );
-  items.forEach((el) => io.observe(el));
-  onCleanup(() => io.disconnect());
-}
-
-function initNameMorph() {
-  const root = qs('[data-morph]');
-  const btn = qs<HTMLButtonElement>('[data-morph-btn]');
-  const who = qs('[data-morph-who]');
-  const tail = qs('[data-morph-tail]');
-  if (!root || !btn || !who || !tail) return;
-
-  const NAME = 'haukat';
-  const HANDLE = 'ecures';
-  const WHO = 'who';
-  const rm = reduced();
-  // Start from whatever the markup renders. The default is the handle.
-  let state: 'name' | 'handle' = root.dataset.state === 'name' ? 'name' : 'handle';
-  let running = false;
-  let alive = true;
-  let visible = true;
-  let timer = 0 as number | ReturnType<typeof setTimeout>;
-
-  const scrambleTo = (el: HTMLElement, target: string, dur: number) =>
-    new Promise<void>((resolve) => {
-      if (rm) {
-        el.textContent = target;
-        el.dataset.text = target;
-        return resolve();
-      }
-      const from = el.textContent || '';
-      const len = Math.max(from.length, target.length);
-      const start = performance.now();
-      el.setAttribute('data-scrambling', '');
-      const frame = (now: number) => {
-        if (!alive) return resolve();
-        const t = Math.min(1, (now - start) / dur);
-        let out = '';
-        for (let i = 0; i < len; i++) {
-          const settle = (i + 1) / len;
-          if (t >= settle) out += target[i] ?? '';
-          else if (t >= settle - 0.5) out += GLYPHS[(Math.random() * GLYPHS.length) | 0];
-          else out += from[i] ?? '';
-        }
-        el.textContent = out;
-        if (t < 1) requestAnimationFrame(frame);
-        else {
-          el.textContent = target;
-          el.dataset.text = target;
-          el.removeAttribute('data-scrambling');
-          resolve();
-        }
-      };
-      requestAnimationFrame(frame);
+function initReading() {
+  const bar = qs('[data-read-progress]');
+  const article = qs('.prose');
+  if (bar && article) {
+    const update = perFrame(() => {
+      const r = article.getBoundingClientRect();
+      const span = Math.max(1, r.height - window.innerHeight * 0.55);
+      const p = Math.min(1, Math.max(0, -r.top / span));
+      bar.style.setProperty('--p', p.toFixed(4));
     });
-
-  const typeTo = (el: HTMLElement, target: string, step: number) =>
-    new Promise<void>((resolve) => {
-      if (rm) {
-        el.textContent = target;
-        return resolve();
-      }
-      el.setAttribute('data-typing', '');
-      let cur = el.textContent || '';
-      const tick = () => {
-        if (!alive) return resolve();
-        if (!target.startsWith(cur)) cur = cur.slice(0, -1);
-        else if (cur.length < target.length) cur = target.slice(0, cur.length + 1);
-        else {
-          el.removeAttribute('data-typing');
-          return resolve();
-        }
-        el.textContent = cur;
-        setTimeout(tick, step);
-      };
-      tick();
-    });
-
-  const go = async (to: 'name' | 'handle') => {
-    if (running || to === state) return;
-    running = true;
-    root.setAttribute('data-state', to === 'handle' ? 'to-handle' : 'to-name');
-    if (to === 'handle') {
-      await Promise.all([typeTo(who, WHO, 80), scrambleTo(tail, HANDLE, 650)]);
-    } else {
-      await Promise.all([typeTo(who, '', 60), scrambleTo(tail, NAME, 650)]);
-    }
-    if (!alive) return;
-    state = to;
-    root.setAttribute('data-state', to);
-    btn.setAttribute('aria-pressed', String(to === 'handle'));
-    btn.setAttribute(
-      'aria-label',
-      to === 'handle' ? 'Show the name: Ahmad Shaukat' : 'Show the handle: ahmad who secures',
-    );
-    btn.title = to === 'handle' ? 'Ahmad Shaukat' : 'ahmad who secures';
-    running = false;
-  };
-
-  const schedule = (delay?: number) => {
-    clearTimeout(timer as number);
-    if (rm || !alive) return;
-    const wait = delay ?? 1000;
-    timer = setTimeout(async () => {
-      if (visible && !document.hidden) await go(state === 'name' ? 'handle' : 'name');
-      schedule();
-    }, wait);
-  };
-
-  btn.addEventListener('click', async () => {
-    clearTimeout(timer as number);
-    await go(state === 'name' ? 'handle' : 'name');
-    schedule(1600);
-  });
-
-  const io = new IntersectionObserver((entries) => {
-    visible = entries[0]?.isIntersecting ?? true;
-  });
-  io.observe(root);
-
-  schedule(1400);
-  onCleanup(() => {
-    alive = false;
-    clearTimeout(timer as number);
-    io.disconnect();
-  });
-}
-
-function initTyper() {
-  const el = qs('[data-typer]');
-  if (!el) return;
-  let phrases: string[] = [];
-  try {
-    phrases = JSON.parse(el.dataset.typer || '[]');
-  } catch {
-    return;
+    update();
+    window.addEventListener('scroll', update, { passive: true });
+    window.addEventListener('resize', update);
   }
-  if (!phrases.length || reduced()) return;
-  let p = 0;
-  let i = phrases[0].length;
-  let deleting = true;
-  let wait = 26;
-  let timer = 0 as number | ReturnType<typeof setTimeout>;
-  const step = () => {
-    const word = phrases[p];
-    if (deleting) {
-      i--;
-      el.textContent = word.slice(0, i);
-      if (i <= 0) {
-        deleting = false;
-        p = (p + 1) % phrases.length;
-        wait = 350;
-      } else wait = 18;
-    } else {
-      i++;
-      el.textContent = phrases[p].slice(0, i);
-      if (i >= phrases[p].length) {
-        deleting = true;
-        wait = 2600;
-      } else wait = 38;
-    }
-    timer = setTimeout(step, wait);
-  };
-  timer = setTimeout(step, 2600);
-  onCleanup(() => clearTimeout(timer as number));
+
+  const links = qsa<HTMLAnchorElement>('[data-toc] a');
+  if (!links.length) return;
+  const byHeading = new Map<HTMLElement, HTMLAnchorElement[]>();
+  for (const a of links) {
+    const heading = document.getElementById(decodeURIComponent(a.hash.slice(1)));
+    if (!heading) continue;
+    byHeading.set(heading, [...(byHeading.get(heading) ?? []), a]);
+  }
+  const headings = [...byHeading.keys()];
+  const spy = perFrame(() => {
+    let current = headings[0];
+    for (const h of headings) if (h.getBoundingClientRect().top < 150) current = h;
+    for (const a of links) a.removeAttribute('aria-current');
+    for (const a of byHeading.get(current) ?? []) a.setAttribute('aria-current', 'true');
+  });
+  spy();
+  window.addEventListener('scroll', spy, { passive: true });
 }
 
-function initThreat() {
-  const root = qs('[data-threat]');
-  if (!root) return;
-  const cleanup = initThreatMap(root, reduced());
-  onCleanup(cleanup);
-}
-
-function initCodeBlocks() {
-  for (const pre of qsa<HTMLPreElement>('.prose pre')) {
-    if (pre.parentElement?.classList.contains('codeblock')) continue;
-    const lang = pre.dataset.language || 'text';
+function initCopy() {
+  for (const pre of qsa('.prose pre')) {
     const wrap = document.createElement('div');
-    wrap.className = 'codeblock';
-    const bar = document.createElement('div');
-    bar.className = 'codeblock-bar';
-    const left = document.createElement('span');
-    const dots = document.createElement('span');
-    dots.className = 'dots';
-    dots.setAttribute('aria-hidden', 'true');
-    dots.innerHTML = '<i></i><i></i><i></i>';
-    left.appendChild(dots);
-    left.appendChild(document.createTextNode(lang));
+    wrap.className = 'code-wrap';
+    pre.parentNode?.insertBefore(wrap, pre);
+    wrap.appendChild(pre);
+
     const btn = document.createElement('button');
     btn.type = 'button';
     btn.className = 'copy-btn';
-    btn.textContent = 'copy';
+    btn.textContent = 'Copy';
+    btn.setAttribute('aria-label', 'Copy this code');
     btn.addEventListener('click', async () => {
       try {
-        await navigator.clipboard.writeText(pre.innerText);
-        btn.textContent = 'copied';
-        btn.setAttribute('data-state', 'done');
-        toast('Copied to clipboard', `${lang} snippet`);
+        await navigator.clipboard.writeText(pre.textContent ?? '');
+        btn.textContent = 'Copied';
+        btn.setAttribute('data-done', '');
       } catch {
-        btn.textContent = 'press ctrl+c';
+        // Clipboard refused: select the code so Ctrl+C works.
+        const range = document.createRange();
+        range.selectNodeContents(pre);
+        const sel = window.getSelection();
+        sel?.removeAllRanges();
+        sel?.addRange(range);
+        btn.textContent = 'Selected';
       }
-      setTimeout(() => {
-        btn.textContent = 'copy';
-        btn.removeAttribute('data-state');
+      window.setTimeout(() => {
+        btn.textContent = 'Copy';
+        btn.removeAttribute('data-done');
       }, 1800);
     });
-    bar.appendChild(left);
-    bar.appendChild(btn);
-    pre.replaceWith(wrap);
-    wrap.appendChild(bar);
-    wrap.appendChild(pre);
+    wrap.appendChild(btn);
   }
 }
 
-function initProseLinks() {
-  for (const a of qsa<HTMLAnchorElement>('.prose a[href]')) {
-    try {
-      const u = new URL(a.href, location.href);
-      if (u.origin !== location.origin && u.protocol.startsWith('http')) {
-        a.target = '_blank';
-        a.rel = 'noopener noreferrer';
-      }
-    } catch {
-      /* ignore */
-    }
-  }
-}
-
-function initReading() {
-  const bar = qs('[data-read-progress]');
-  const main = qs('.doc-main');
-  if (!bar || !main) return;
-  let raf = 0;
-  const update = () => {
-    raf = 0;
-    const r = main.getBoundingClientRect();
-    const total = r.height - window.innerHeight * 0.6;
-    const p = Math.min(1, Math.max(0, -r.top / Math.max(1, total)));
-    bar.style.setProperty('--read', p.toFixed(4));
-  };
-  const onScroll = () => {
-    if (!raf) raf = requestAnimationFrame(update);
-  };
-  update();
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
-  onCleanup(() => {
-    window.removeEventListener('scroll', onScroll);
-    window.removeEventListener('resize', onScroll);
-  });
-}
-
-function initToc() {
-  const heads = qsa('.prose h2[id]');
-  const links = qsa<HTMLAnchorElement>('[data-toc] a');
-  if (!heads.length || !links.length) return;
-  let current = '';
-  let raf = 0;
-  const update = () => {
-    raf = 0;
-    const line = window.innerHeight * 0.3;
-    let id = '';
-    for (const h of heads) {
-      if (h.getBoundingClientRect().top <= line) id = h.id;
-      else break;
-    }
-    if (id === current) return;
-    current = id;
-    for (const a of links) {
-      if (id && a.getAttribute('href') === `#${id}`) a.setAttribute('data-active', '');
-      else a.removeAttribute('data-active');
-    }
-  };
-  const onScroll = () => {
-    if (!raf) raf = requestAnimationFrame(update);
-  };
-  update();
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', onScroll);
-  onCleanup(() => {
-    window.removeEventListener('scroll', onScroll);
-    window.removeEventListener('resize', onScroll);
-  });
-}
-
-/* ---------------------------------------------------------------- lifecycle */
-
-let globalsReady = false;
-let firstLoad = true;
-
-function initGlobals() {
-  if (globalsReady) return;
-  globalsReady = true;
-  busy.init();
-  initClock();
-  initMenu();
-  initSpotlight();
-  initClickPulse();
-  initOutbound();
-  runBoot();
-
-  document.addEventListener('astro:before-preparation', (e) => {
-    const to = new URL((e as Event & { to: URL }).to);
-    if (to.pathname === location.pathname) return;
-    qs('[data-nav-progress]')?.setAttribute('data-state', 'loading');
-    busy.start('ESTABLISHING LINK', `GET ${to.pathname}`);
-  });
-
-  document.addEventListener('astro:after-preparation', () => {
-    busy.line('TLS 1.3 session resumed', true);
-  });
-
-  document.addEventListener('astro:before-swap', () => {
-    while (pageCleanups.length) {
-      try {
-        pageCleanups.pop()?.();
-      } catch {
-        /* ignore */
-      }
-    }
-    const beam = qs('[data-scan-beam]');
-    if (beam && !reduced()) {
-      beam.removeAttribute('data-run');
-      void beam.offsetWidth;
-      beam.setAttribute('data-run', '');
-    }
-  });
-
-  document.addEventListener('astro:after-swap', () => {
-    // The router replaces <html> attributes; restore the JS marker.
-    document.documentElement.setAttribute('data-js', '');
-  });
-}
-
-document.addEventListener('astro:page-load', () => {
-  initGlobals();
-  const path = location.pathname;
-  updateNav(path);
-  typePrompt(path);
-
-  initCodeBlocks();
-  initProseLinks();
-  initDecrypt();
-  initReveal();
-  initTyper();
-  initNameMorph();
-  initThreat();
-  initReading();
-  initToc();
-
-  if (!firstLoad) {
-    busy.done('200 OK, page rendered');
-    const bar = qs('[data-nav-progress]');
-    bar?.setAttribute('data-state', 'done');
-    setTimeout(() => bar?.removeAttribute('data-state'), 700);
-  }
-  firstLoad = false;
-});
+initHeader();
+initTheme();
+initMorph();
+initTrail();
+initSim();
+initPalette();
+initGlow();
+initReading();
+initCopy();
