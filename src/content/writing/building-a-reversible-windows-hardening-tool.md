@@ -14,7 +14,11 @@ Most Windows hardening scripts are written for administrators who can read them.
 
 ## Read-only by default
 
-Every scan only reads. Nothing changes until the user ticks an item and confirms a dialog. Scanning and the compromise check work without admin rights, and the tool only asks for elevation when the user wants to apply something. Someone who only wants to know whether their PC is in a good state never hands the tool admin rights at all.
+Every scan only reads. Nothing changes until the user ticks an item and confirms a dialog. Scanning and the compromise check work without admin rights. `Start.bat` asks for elevation when it starts, because most people go on to apply fixes. Someone who only wants to know whether their PC is in a good state can start the tool from a normal PowerShell window instead and never hand it admin rights:
+
+```text
+powershell -NoProfile -ExecutionPolicy Bypass -STA -File .\src\Optimizer.ps1
+```
 
 ## Record before you change
 

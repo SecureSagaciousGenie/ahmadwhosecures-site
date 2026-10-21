@@ -9,7 +9,8 @@ frameworks:
   - PowerShell 5.1
   - Windows 11
   - MS Defender
-  - Hayabusa, Chainsaw (opt-in)
+  - Hayabusa, Chainsaw, Autoruns (opt-in)
+  - Sysmon (opt-in)
 setting: Independent open source
 period: 2026 to now
 order: 5
@@ -31,7 +32,7 @@ Scans are read-only. Nothing changes without a tick and a confirmation. Before t
 
 The rollback script runs elevated, so where it lives matters. When the tool runs as administrator it writes backups and the rollback script to a folder under `%ProgramData%` that only Administrators and SYSTEM can write to. A rollback script in a user-writable folder would be a privilege escalation path waiting for a non-admin process to edit it.
 
-Third-party DFIR tools are opt-in and never bundled. Hayabusa and Chainsaw download from their official GitHub releases only after a consent screen, and only if the archive matches a pinned SHA-256. If no trusted hash is available the download is refused.
+Third-party DFIR tools are opt-in and never bundled. Hayabusa and Chainsaw download from their official GitHub releases only after a consent screen, and only if the archive matches a pinned SHA-256. If no trusted hash is available the download is refused. Autoruns and standalone Sysmon come from Sysinternals and must carry a valid MS signature.
 
 ## Where it stands
 

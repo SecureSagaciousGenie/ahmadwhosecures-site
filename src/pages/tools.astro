@@ -13,7 +13,7 @@ const groups = [
     icon: 'shield' as const,
     name: 'Harden',
     points: [
-      'Audits Defender, the firewall, SmartScreen, UAC, SMBv1, LLMNR, AutoRun, RDP, Secure Boot, TPM and BitLocker, with a risk tier and a fix for each finding.',
+      'Audits Defender, the firewall, SmartScreen, UAC, SMBv1, LLMNR, AutoRun, RDP, Secure Boot, TPM, BitLocker and more. Every finding has a risk tier, and 27 have a one-click fix.',
       'Credential-theft hardening: LSA protection, WDigest, PowerShell 2.0, NetBIOS and mDNS name resolution, SMB signing, Credential Guard and patch age.',
       'Opt-in Sysmon: enables the built-in Windows feature or installs MS Sysmon with a bundled, pinned sysmon-modular config.',
     ],
@@ -117,7 +117,7 @@ const tiers = [
         <h2 class="subhead" id="w11-title">Win11-Security-Optimizer</h2>
         <div class="meta-row" style="margin: 0 0 1.5rem">
           <Status status="Shipped" label="Shipped, v1.2.0" />
-          <span>12 Oct 2026</span>
+          <span>21 Oct 2026</span>
           <span>MIT</span>
         </div>
         <p class="lead-p">
@@ -217,13 +217,15 @@ const tiers = [
       </div>
       <div class="prose">
         <p>
-          CI runs 216 Pester tests and a PSScriptAnalyzer gate on Windows PowerShell 5.1. A separate integration workflow
-          applies real fixes, downloads and rollbacks on an elevated Windows runner, and the self-test clicks through every
-          user action, including Run Full Scan, Deep Scan, the Debloat presets, the evidence pack and all three Pro Tools.
+          CI runs 327 Pester tests and a PSScriptAnalyzer gate on Windows PowerShell 5.1. A separate integration workflow
+          applies real fixes, downloads and rollbacks on an elevated Windows runner. Its self-test clicks Run Full Scan,
+          every filter chip, Refresh, Deep Scan, the Debloat presets, the card actions, Save report, baseline save and
+          compare, the evidence pack and all three Pro Tools, through the consent window and the verified download.
         </p>
         <p>
-          Releases are built by a workflow from the tagged commit, with a zip and <code>SHA256SUMS.txt</code> to check before
-          extracting. The headless self-test runs the same way on any machine:
+          Releases, starting with <a href={`${repo}/releases/tag/v1.2.0`} rel="noopener">v1.2.0</a>, are built by a
+          workflow from the tagged commit, with a zip and <code>SHA256SUMS.txt</code> to check before extracting.
+          Maintainers can run the self-test locally:
         </p>
         <pre><code>powershell -NoProfile -ExecutionPolicy Bypass -STA -File .\src\Optimizer.ps1 -SelfTest</code></pre>
       </div>

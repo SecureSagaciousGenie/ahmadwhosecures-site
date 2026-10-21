@@ -5,12 +5,12 @@ import Icon from './Icon.astro';
 
 const lines = [
   ['scan', 'Read-only audit complete. 0 changes made.'],
-  ['select', 'Ticked: disable SMBv1 (Elevated tier). Confirmed.'],
+  ['select', 'Ticked: disable LLMNR (Elevated tier). Confirmed.'],
   ['restore', 'System Restore point created before the first change'],
-  ['backup', 'Previous state written to Backup_*.json'],
-  ['rollback', 'Undo step appended to Rollback_*.ps1'],
-  ['apply', 'SMB1Protocol optional feature disabled'],
-  ['verify', 'Read back after apply: SMBv1 is off'],
+  ['backup', 'Previous EnableMulticast value saved for Backup_*.json'],
+  ['rollback', 'Undo step queued for Rollback_*.ps1'],
+  ['apply', 'EnableMulticast = 0 under the DNSClient policy key'],
+  ['verify', 'Read back after apply: LLMNR is off'],
 ];
 ---
 
@@ -32,7 +32,7 @@ const lines = [
     }
   </ol>
   <figcaption>
-    Every fix follows this order. Scans only read, nothing changes without a tick and a confirmation, and the rollback
+    The order a fix runs in, shown for LLMNR. Scans only read, nothing changes without a tick and a confirmation, and the rollback
     script lives in a folder only Administrators and SYSTEM can write to.
   </figcaption>
 </figure>
