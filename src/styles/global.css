@@ -209,49 +209,6 @@ kbd {
   font-family: var(--font-mono);
 }
 
-/* ---------- Classification bar ---------- */
-
-.classbar {
-  background: var(--bg-2);
-  border-bottom: 1px solid var(--line);
-  font: 500 0.6875rem/1.2 var(--font-mono);
-  letter-spacing: 0.06em;
-  color: var(--ink-3);
-  view-transition-name: classbar;
-}
-
-.classbar-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 1rem;
-  min-height: 32px;
-  padding-block: 6px;
-}
-
-.classbar-row p {
-  display: flex;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-.classbar-tag {
-  color: var(--ok);
-  border: 1px solid currentColor;
-  padding: 3px 6px 2px;
-  border-radius: 2px;
-  font-weight: 700;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
-@media (max-width: 640px) {
-  .classbar {
-    font-size: 0.625rem;
-    letter-spacing: 0.02em;
-  }
-}
-
 /* ---------- Header ---------- */
 
 .hdr {
@@ -4231,7 +4188,6 @@ kbd {
     color-scheme: light;
   }
 
-  .classbar,
   .hdr,
   .ftr,
   .pal,
